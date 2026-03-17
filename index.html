@@ -1,0 +1,798 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧零售管理系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-dark: #333;
+            --border: #ddd;
+            --pink: #ff6b81;
+            --yellow: #feca57;
+            --lightblue: #48dbfb;
+            --red: #ff4757;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-dark); }
+        
+        /* Header & Stats */
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; }
+        .stats { font-size: 0.9em; margin-top: 5px; opacity: 0.9; }
+        .data-controls { margin-top: 10px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        button, select, input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; }
+        button { cursor: pointer; background: white; color: var(--text-dark); transition: 0.2s; }
+        button:hover { background: #eee; }
+        button.primary { background: var(--primary); color: white; border: none; }
+        button.primary:hover { background: #357abD; }
+
+        /* Navigation */
+        nav { display: flex; overflow-x: auto; background: white; border-bottom: 2px solid var(--border); }
+        nav button { flex: 1; border: none; background: none; padding: 15px; font-weight: bold; min-width: 80px; }
+        nav button.active { border-bottom: 3px solid var(--primary); color: var(--primary); }
+
+        /* Page Container */
+        .page { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .page.active { display: block; }
+
+        /* Cards & Layouts */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
+        .card { background: var(--card-bg); padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 10px; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-title { font-weight: bold; font-size: 1.1em; color: var(--primary); }
+        .card-subtitle { font-size: 0.85em; color: #666; }
+        .barcode-container { text-align: center; margin: 10px 0; overflow: hidden; }
+        .barcode-container svg { max-width: 100%; height: auto; }
+        
+        /* Action Buttons Grid */
+        .action-btns { display: flex; gap: 5px; flex-wrap: wrap; margin-top: auto; }
+        .action-btns button { flex: 1; padding: 5px; font-size: 12px; }
+        
+        /* Form Elements */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        textarea, input[type="text"] { width: 100%; }
+        
+        /* Custom Colors for Errata */
+        .btn-pink { background: var(--pink); color: white; border: none; }
+        .btn-yellow { background: var(--yellow); color: var(--text-dark); border: none; }
+        .btn-blue { background: var(--lightblue); color: var(--text-dark); border: none; }
+        .locked { opacity: 0.6; cursor: not-allowed; }
+
+        /* QA Highlights */
+        .bg-red { background-color: #ffeaa7 !important; border-left: 5px solid var(--red); }
+        .bg-red .date-header { color: var(--red); }
+        .bg-yellow { background-color: #fffae3 !important; border-left: 5px solid var(--yellow); }
+        
+        /* Utilities */
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .w-100 { width: 100%; }
+        .mt-10 { margin-top: 10px; }
+        .highlight-btn { background: var(--primary); color: white; }
+
+        @media (max-width: 600px) {
+            .card-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>智慧零售管理系統</h1>
+    <div class="stats" id="importStats">總導入數: 0 | 合併數: 0 | 合併後總數: 0</div>
+    <div class="data-controls">
+        <input type="file" id="csvFile" accept=".csv" style="display: none;">
+        <button onclick="document.getElementById('csvFile').click()">📂 導入 CSV</button>
+        <button onclick="exportCSV()">💾 導出 CSV</button>
+        <button onclick="clearDB()" style="color: var(--red);">⚠️ 清空資料庫</button>
+    </div>
+</header>
+
+<nav id="navbar">
+    <button onclick="switchTab('add')" class="active">新增</button>
+    <button onclick="switchTab('search')">搜尋</button>
+    <button onclick="switchTab('errata')">勘誤</button>
+    <button onclick="switchTab('fresh')">鮮食</button>
+    <button onclick="switchTab('qa')">品保</button>
+    <button onclick="switchTab('restock')">補貨</button>
+    <button onclick="switchTab('category')">分類</button>
+    <button onclick="switchTab('event')">活動</button>
+</nav>
+
+<div id="page-add" class="page active">
+    <h2>新增資料</h2>
+    <div class="form-group">
+        <label>條碼類型</label>
+        <select id="addType">
+            <option value="EAN8">EAN8</option>
+            <option value="EAN13">EAN13</option>
+            <option value="UPCA">UPCA</option>
+            <option value="UPCE">UPCE</option>
+            <option value="I35">I35</option>
+            <option value="I24">I24</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>多行輸入 (每行格式：ID/Name)</label>
+        <textarea id="addInput" rows="10" placeholder="12345678/蘋果汁&#10;87654321/香蕉牛奶"></textarea>
+    </div>
+    <button class="primary w-100" onclick="addItems()">新增至資料庫</button>
+</div>
+
+<div id="page-search" class="page">
+    <h2>資料搜尋</h2>
+    <div class="flex-row form-group">
+        <input type="text" id="searchK1" placeholder="關鍵字 1 (ID 或 Name)" oninput="runSearch()">
+        <input type="text" id="searchK2" placeholder="關鍵字 2 (選填)" oninput="runSearch()">
+    </div>
+    <div class="flex-row form-group">
+        <select id="searchC1" onchange="runSearch()"><option value="ALL">全部搜尋 (分類)</option></select>
+        <select id="searchEvent" onchange="runSearch()"><option value="ALL">全部搜尋 (活動)</option></select>
+    </div>
+    <div class="stats" id="searchStats">剩餘筆數: 0</div>
+    <div class="card-grid" id="searchResult"></div>
+</div>
+
+<div id="page-errata" class="page">
+    <h2>資料勘誤</h2>
+    <div class="stats" id="errataStats">重複總筆數: 0 | 重複總批數: 0</div>
+    <div class="card-grid" id="errataResult"></div>
+</div>
+
+<div id="page-fresh" class="page">
+    <h2>鮮食條碼系統 (I35 / I24)</h2>
+    <input type="text" id="freshSearch" class="w-100" placeholder="輸入一字以上搜尋鮮食品名..." oninput="runFreshSearch()">
+    <div class="card-grid mt-10" id="freshResult"></div>
+</div>
+
+<div id="page-qa" class="page">
+    <h2>品保管理</h2>
+    <div id="qaResult"></div>
+</div>
+
+<div id="page-restock" class="page">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>補貨清單</h2>
+        <button onclick="clearRestock()" style="color: var(--red);">🗑️ 一鍵清除</button>
+    </div>
+    <div class="card-grid" id="restockResult"></div>
+</div>
+
+<div id="page-category" class="page">
+    <h2>分類管理</h2>
+    <div class="flex-row form-group">
+        <select id="catSelect" onchange="toggleNewCategoryInput()"></select>
+        <input type="text" id="catNewInput" placeholder="輸入新分類名稱" style="display:none;">
+        <button class="primary" onclick="applyCategory()">再分類</button>
+    </div>
+    <h3>未分類前 50 筆</h3>
+    <div id="catList" style="background: white; padding: 10px; border-radius: 8px;"></div>
+</div>
+
+<div id="page-event" class="page">
+    <h2>活動管理</h2>
+    <div class="form-group" id="eventTagList" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;"></div>
+    <div class="form-group">
+        <label>活動名稱</label>
+        <input type="text" id="eventName" placeholder="例如: 買一送一">
+    </div>
+    <div class="form-group">
+        <label>模糊搜尋品名 (多行)</label>
+        <textarea id="eventSearchInput" rows="6" placeholder="輸入多筆品名..." oninput="runEventSearch()"></textarea>
+    </div>
+    <div id="eventMatchResult" style="margin-bottom:15px; background:white; padding:10px; border-radius:8px;"></div>
+    <button class="primary w-100" onclick="applyEvent()">加入活動</button>
+</div>
+
+<script>
+    // --- State Management ---
+    let db = [];
+    let restockList = [];
+    let importStats = { total: 0, merged: 0, final: 0 };
+
+    // --- Initialization ---
+    window.onload = () => {
+        loadDB();
+        document.getElementById('csvFile').addEventListener('change', importCSV);
+        refreshUI();
+    };
+
+    // --- Core Logic ---
+    function loadDB() {
+        const stored = localStorage.getItem('retailDB');
+        db = stored ? JSON.parse(stored) : [];
+        updateHeaderStats();
+    }
+
+    function saveDB() {
+        localStorage.setItem('retailDB', JSON.stringify(db));
+        updateHeaderStats();
+    }
+
+    function updateHeaderStats() {
+        importStats.final = db.length;
+        document.getElementById('importStats').innerText = 
+            `總導入數: ${importStats.total} | 合併數: ${importStats.merged} | 合併後總數: ${importStats.final}`;
+    }
+
+    function cleanString(str) { return str ? String(str).trim() : ''; }
+    
+    function cleanExpiry(expiry) {
+        if (!expiry) return '';
+        // 移除污染字串 (保留全數字的日期，通常為 8 碼 YYYYMMDD)
+        return expiry.split('/').filter(x => /^\d+$/.test(x)).join('/');
+    }
+
+    function mergeSplitStr(a, b) {
+        const set = new Set([...(a?a.split('/'):[]), ...(b?b.split('/'):[])]);
+        return Array.from(set).filter(x => x).join('/');
+    }
+
+    // --- Tab Navigation ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        refreshUI(); // Re-render target page
+    }
+
+    function refreshUI() {
+        renderBarcodes(); // render any unrendered barcodes
+        const activePage = document.querySelector('.page.active').id;
+        if(activePage === 'page-search') initSearchPage();
+        if(activePage === 'page-errata') renderErrata();
+        if(activePage === 'page-fresh') runFreshSearch();
+        if(activePage === 'page-qa') renderQA();
+        if(activePage === 'page-restock') renderRestock();
+        if(activePage === 'page-category') renderCategoryPage();
+        if(activePage === 'page-event') renderEventPage();
+    }
+
+    // --- Barcode Rendering ---
+    function renderBarcodes() {
+        document.querySelectorAll('.barcode').forEach(svg => {
+            if (svg.getAttribute('data-rendered')) return;
+            try {
+                let val = svg.dataset.value;
+                let format = svg.dataset.format.toUpperCase();
+                if (format === 'I35' || format === 'I24') format = 'EAN8';
+                
+                JsBarcode(svg, val, { format: format, height: 40, displayValue: true, fontSize: 14 });
+                svg.setAttribute('data-rendered', 'true');
+            } catch (e) {
+                console.warn('Barcode gen failed for', svg.dataset.value, e);
+            }
+        });
+    }
+
+    // --- 1. CSV Import / Export ---
+    function importCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target.result;
+            const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+            let imported = 0;
+            let merged = 0;
+
+            lines.forEach((line, index) => {
+                const parts = line.split(',');
+                if (parts.length < 6) return;
+                
+                let [Type, ID, Name, C1, Expiry, Event] = parts.map(cleanString);
+                Type = Type.toUpperCase();
+                
+                // Skip header
+                if (index === 0 && Type === 'TYPE' && ID === 'ID') return;
+
+                imported++;
+                Expiry = cleanExpiry(Expiry);
+
+                let existing = db.find(x => x.Type === Type && x.ID === ID && x.Name === Name && x.C1 === C1);
+                if (existing) {
+                    existing.Expiry = mergeSplitStr(existing.Expiry, Expiry);
+                    existing.Event = mergeSplitStr(existing.Event, Event);
+                    merged++;
+                } else {
+                    db.push({ Type, ID, Name, C1, Expiry, Event });
+                }
+            });
+            importStats.total += imported;
+            importStats.merged += merged;
+            saveDB();
+            alert('CSV 導入完成！');
+            refreshUI();
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // reset
+    }
+
+    function exportCSV() {
+        let csvContent = "Type,ID,Name,C1,Expiry,Event\n" + 
+            db.map(e => `${e.Type},${e.ID},${e.Name},${e.C1},${e.Expiry},${e.Event}`).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "retail_data.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function clearDB() {
+        if(confirm("確定要清空所有資料嗎？此操作無法還原！")) {
+            db = [];
+            importStats = { total: 0, merged: 0, final: 0 };
+            saveDB();
+            refreshUI();
+        }
+    }
+
+    // --- 2. 新增 (Add) ---
+    function addItems() {
+        const type = document.getElementById('addType').value;
+        const text = document.getElementById('addInput').value;
+        if (!text.trim()) return;
+
+        const lines = text.split(/\r?\n/);
+        lines.forEach(line => {
+            if(!line.trim()) return;
+            const parts = line.split('/');
+            const id = parts[0];
+            const name = parts[1] || '';
+            db.push({ Type: type.toUpperCase(), ID: id, Name: name, C1: '未分類', Expiry: '', Event: '' });
+        });
+        saveDB();
+        document.getElementById('addInput').value = '';
+        alert('資料已新增');
+    }
+
+    // --- 3. 搜尋 (Search) ---
+    function initSearchPage() {
+        const c1Set = new Set(db.map(x => x.C1).filter(x => x));
+        const eventSet = new Set();
+        db.forEach(x => { if(x.Event) x.Event.split('/').forEach(e => { if(e) eventSet.add(e); }) });
+
+        const c1Select = document.getElementById('searchC1');
+        const evSelect = document.getElementById('searchEvent');
+        
+        c1Select.innerHTML = '<option value="ALL">全部搜尋 (分類)</option>' + 
+            Array.from(c1Set).map(c => `<option value="${c}">${c}</option>`).join('');
+        evSelect.innerHTML = '<option value="ALL">全部搜尋 (活動)</option>' + 
+            Array.from(eventSet).map(e => `<option value="${e}">${e}</option>`).join('');
+            
+        runSearch();
+    }
+
+    function runSearch() {
+        const k1 = document.getElementById('searchK1').value.trim();
+        const k2 = document.getElementById('searchK2').value.trim();
+        const c1 = document.getElementById('searchC1').value;
+        const ev = document.getElementById('searchEvent').value;
+
+        // "在未輸入一字以上時先不顯示搜尋結果"
+        if (!k1 && !k2 && c1 === 'ALL' && ev === 'ALL') {
+            document.getElementById('searchResult').innerHTML = '';
+            document.getElementById('searchStats').innerText = '剩餘筆數: 0';
+            return;
+        }
+
+        let results = db.filter(item => {
+            let match = true;
+            if (k1) match = match && (item.ID.includes(k1) || item.Name.includes(k1));
+            if (k2) match = match && (item.ID.includes(k2) || item.Name.includes(k2));
+            if (c1 !== 'ALL') match = match && (item.C1 === c1);
+            if (ev !== 'ALL') {
+                const itemEvs = item.Event ? item.Event.split('/') : [];
+                match = match && itemEvs.includes(ev);
+            }
+            return match;
+        });
+
+        document.getElementById('searchStats').innerText = `剩餘筆數: ${results.length > 50 ? results.length - 50 : 0}`;
+        results = results.slice(0, 50);
+
+        const container = document.getElementById('searchResult');
+        container.innerHTML = results.map(item => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">${item.Name}</div>
+                </div>
+                <div class="card-subtitle">C1: ${item.C1} | Event: ${item.Event || '無'}</div>
+                <div class="barcode-container">
+                    <svg class="barcode" data-value="${item.ID}" data-format="${item.Type}"></svg>
+                </div>
+                <div class="action-btns">
+                    <button onclick="actionSetC1('${item.ID}', '${item.Name}')">✋ 再分類</button>
+                    <input type="date" style="flex:1; padding:0;" onchange="actionAddQA('${item.ID}', '${item.Name}', this.value)">
+                    <button onclick="actionRestock('${item.ID}', '${item.Name}', this)">🛒 補貨</button>
+                    <button onclick="actionDelete('${item.ID}', '${item.Name}')">🗑️ 刪除</button>
+                </div>
+            </div>
+        `).join('');
+        renderBarcodes();
+    }
+
+    function actionSetC1(id, name) {
+        let item = db.find(x => x.ID === id && x.Name === name);
+        if(item) { item.C1 = '未分類'; saveDB(); runSearch(); }
+    }
+    function actionAddQA(id, name, dateStr) {
+        if(!dateStr) return;
+        const formatted = dateStr.replace(/-/g, ''); // YYYYMMDD
+        let item = db.find(x => x.ID === id && x.Name === name);
+        if(item) {
+            item.Expiry = mergeSplitStr(item.Expiry, formatted);
+            saveDB(); runSearch();
+        }
+    }
+    function actionRestock(id, name, btn) {
+        let item = db.find(x => x.ID === id && x.Name === name);
+        if(item && !restockList.some(r => r.ID === id && r.Name === name)) {
+            restockList.push(item);
+            btn.classList.add('highlight-btn');
+        }
+    }
+    function actionDelete(id, name) {
+        if(confirm('確認刪除整筆資料？')) {
+            db = db.filter(x => !(x.ID === id && x.Name === name));
+            saveDB(); runSearch();
+        }
+    }
+
+    // --- 4. 勘誤 (Errata) ---
+    function renderErrata() {
+        // 找出重複的 ID 群組
+        const idGroups = {};
+        db.forEach(item => {
+            if(!idGroups[item.ID]) idGroups[item.ID] = [];
+            idGroups[item.ID].push(item);
+        });
+
+        const container = document.getElementById('errataResult');
+        let html = '';
+        let duplicateItemsCount = 0;
+        let duplicateBatchesCount = 0;
+
+        for (const [id, items] of Object.entries(idGroups)) {
+            if (items.length > 1) {
+                duplicateBatchesCount++;
+                duplicateItemsCount += items.length;
+
+                const uTypes = [...new Set(items.map(x => x.Type))];
+                const uNames = [...new Set(items.map(x => x.Name))];
+                const uC1s = [...new Set(items.map(x => x.C1))];
+
+                // Auto Merge Check
+                if (uTypes.length === 1 && uNames.length === 1 && uC1s.length === 1) {
+                    let mExpiry = items.map(x=>x.Expiry).join('/');
+                    let mEvent = items.map(x=>x.Event).join('/');
+                    let baseItem = items[0];
+                    db = db.filter(x => x.ID !== id); // remove all old
+                    db.push({
+                        Type: baseItem.Type, ID: baseItem.ID, Name: baseItem.Name, C1: baseItem.C1,
+                        Expiry: mergeSplitStr(mExpiry, ''), Event: mergeSplitStr(mEvent, '')
+                    });
+                    saveDB();
+                    setTimeout(renderErrata, 10); // re-run logic
+                    return; 
+                }
+
+                html += `
+                    <div class="card">
+                        <div class="card-title">ID: ${id}</div>
+                        <div>
+                            <strong>Type:</strong><br>
+                            ${uTypes.map(t => `<button class="btn-pink ${uTypes.length===1?'locked':''}" onclick="errataResolve('${id}', 'Type', '${t}')" ${uTypes.length===1?'disabled':''}>${t}</button>`).join(' ')}
+                        </div>
+                        <div>
+                            <strong>Name:</strong><br>
+                            ${uNames.map(n => `<button class="btn-yellow ${uNames.length===1?'locked':''}" onclick="errataResolve('${id}', 'Name', '${n}')" ${uNames.length===1?'disabled':''}>${n}</button>`).join(' ')}
+                        </div>
+                        <div>
+                            <strong>C1:</strong><br>
+                            ${uC1s.map(c => `<button class="btn-blue ${uC1s.length===1?'locked':''}" onclick="errataResolve('${id}', 'C1', '${c}')" ${uC1s.length===1?'disabled':''}>${c}</button>`).join(' ')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('errataStats').innerText = `重複總筆數: ${duplicateItemsCount} | 重複總批數: ${duplicateBatchesCount}`;
+        container.innerHTML = html;
+    }
+
+    function errataResolve(id, field, value) {
+        db.forEach(item => {
+            if (item.ID === id) item[field] = value;
+        });
+        saveDB();
+        renderErrata();
+    }
+
+    // --- 5. 鮮食 (Fresh Food) ---
+    function getJulianDate(dateObj) {
+        var start = new Date(dateObj.getFullYear(), 0, 0);
+        var diff = (dateObj - start) + ((start.getTimezoneOffset() - dateObj.getTimezoneOffset()) * 60 * 1000);
+        var oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay).toString().padStart(3, '0');
+    }
+
+    function runFreshSearch() {
+        const k = document.getElementById('freshSearch').value.trim();
+        const container = document.getElementById('freshResult');
+        if (k.length < 1) { container.innerHTML = ''; return; }
+
+        const results = db.filter(x => (x.Type === 'I35' || x.Type === 'I24') && x.Name.includes(k)).slice(0, 50);
+        
+        const today = new Date();
+        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+        const jToday = getJulianDate(today);
+        const jTomorrow = getJulianDate(tomorrow);
+
+        container.innerHTML = results.map(item => {
+            // Validate ID is 8 digits to construct EAN13
+            let id8 = item.ID.padStart(8, '0').substring(0,8); 
+            
+            let btnHtml = '';
+            if (item.Type === 'I35') {
+                btnHtml = `
+                    <button onclick="showFreshBarcode(this, '${id8}', '${jToday}', '3')">今日到期 (一配)</button>
+                    <button onclick="showFreshBarcode(this, '${id8}', '${jToday}', '5')">今日到期 (二配)</button>
+                    <button onclick="showFreshBarcode(this, '${id8}', '${jTomorrow}', '3')">明日到期 (一配)</button>
+                    <button onclick="showFreshBarcode(this, '${id8}', '${jTomorrow}', '5')">明日到期 (二配)</button>
+                `;
+            } else {
+                btnHtml = `
+                    <button onclick="showFreshBarcode(this, '${id8}', '${jToday}', '1')">今日到期</button>
+                    <button onclick="showFreshBarcode(this, '${id8}', '${jTomorrow}', '1')">明日到期</button>
+                `;
+            }
+
+            return `
+                <div class="card">
+                    <div class="card-title">${item.Name} <span style="font-size:0.8em; color:#666">(${item.Type})</span></div>
+                    <div class="action-btns">${btnHtml}</div>
+                    <div class="barcode-container" style="display:none;">
+                        <svg class="barcode"></svg>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function showFreshBarcode(btn, id8, julian, deliveryStr) {
+        const payload12 = id8 + julian + deliveryStr; // 12碼
+        const card = btn.closest('.card');
+        const svgContainer = card.querySelector('.barcode-container');
+        const svg = svgContainer.querySelector('svg');
+        svgContainer.style.display = 'block';
+        JsBarcode(svg, payload12, { format: 'EAN13', height: 40, displayValue: true, fontSize: 14 });
+    }
+
+    // --- 6. 品保 (QA) ---
+    function renderQA() {
+        const today = new Date();
+        const curY = today.getFullYear();
+        const curM = today.getMonth() + 1; // 1-12
+        const currentYmStr = curY.toString() + curM.toString().padStart(2, '0');
+        
+        // Next 2 months logic (simple numeric string compare is sufficient for YYYYMM format)
+        let n1Y = curM === 12 ? curY + 1 : curY;
+        let n1M = curM === 12 ? 1 : curM + 1;
+        let next1YmStr = n1Y.toString() + n1M.toString().padStart(2, '0');
+
+        let n2Y = n1M === 12 ? n1Y + 1 : n1Y;
+        let n2M = n1M === 12 ? 1 : n1M + 1;
+        let next2YmStr = n2Y.toString() + n2M.toString().padStart(2, '0');
+        
+        let targetYmStrs = [currentYmStr, next1YmStr, next2YmStr];
+
+        let dateGroups = {};
+
+        db.forEach(item => {
+            if (!item.Expiry) return;
+            const dates = item.Expiry.split('/').filter(d => /^\d{8}$/.test(d));
+            dates.forEach(d => {
+                const ym = d.substring(0, 6);
+                // "僅顯示當月（含已過期）及次兩個月之資料"
+                // 當月已過期代表 ym <= currentYmStr
+                if (ym <= currentYmStr || targetYmStrs.includes(ym)) {
+                    if (!dateGroups[d]) dateGroups[d] = [];
+                    dateGroups[d].push(item);
+                }
+            });
+        });
+
+        // Sort dates
+        const sortedDates = Object.keys(dateGroups).sort();
+        const container = document.getElementById('qaResult');
+        let html = '';
+
+        const todayStr = curY.toString() + curM.toString().padStart(2, '0') + today.getDate().toString().padStart(2, '0');
+
+        sortedDates.forEach(date => {
+            const ym = date.substring(0, 6);
+            let highlightClass = '';
+            
+            if (date < todayStr && ym === currentYmStr) highlightClass = 'bg-red';
+            else if (ym === next1YmStr || ym === next2YmStr) highlightClass = 'bg-yellow';
+
+            html += `
+                <div class="card ${highlightClass}" style="margin-bottom:15px;">
+                    <div class="card-header">
+                        <h3 class="date-header" style="margin:0;">📅 ${date.substring(0,4)}/${date.substring(4,6)}/${date.substring(6,8)}</h3>
+                        <button class="btn-pink" onclick="qaBatchRemove('${date}')">整批下架</button>
+                    </div>
+                    <div class="card-grid" style="margin-top:10px;">
+                        ${dateGroups[date].map(item => `
+                            <div class="card" style="box-shadow:none; border:1px solid #ddd;">
+                                <div><strong>${item.Name}</strong></div>
+                                <div class="barcode-container"><svg class="barcode" data-value="${item.ID}" data-format="${item.Type}"></svg></div>
+                                <button onclick="qaSingleRemove('${item.ID}', '${item.Name}', '${date}')">單品下架</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html || '<p>目前無符合條件之品保資料。</p>';
+        renderBarcodes();
+    }
+
+    function qaBatchRemove(dateStr) {
+        if(confirm(`確認將 ${dateStr} 所有資料下架？`)) {
+            db.forEach(item => {
+                if(item.Expiry && item.Expiry.includes(dateStr)) {
+                    item.Expiry = item.Expiry.split('/').filter(d => d !== dateStr).join('/');
+                }
+            });
+            saveDB(); renderQA();
+        }
+    }
+
+    function qaSingleRemove(id, name, dateStr) {
+        let item = db.find(x => x.ID === id && x.Name === name);
+        if (item && item.Expiry) {
+            item.Expiry = item.Expiry.split('/').filter(d => d !== dateStr).join('/');
+            saveDB(); renderQA();
+        }
+    }
+
+    // --- 7. 補貨 (Restock) ---
+    function renderRestock() {
+        const container = document.getElementById('restockResult');
+        container.innerHTML = restockList.map((item, index) => `
+            <div class="card">
+                <div class="card-title">${item.Name}</div>
+                <div class="barcode-container"><svg class="barcode" data-value="${item.ID}" data-format="${item.Type}"></svg></div>
+            </div>
+        `).join('');
+        renderBarcodes();
+    }
+
+    function clearRestock() {
+        restockList = [];
+        renderRestock();
+    }
+
+    // --- 8. 分類 (Category) ---
+    function renderCategoryPage() {
+        const c1Set = new Set(db.map(x => x.C1).filter(x => x));
+        const select = document.getElementById('catSelect');
+        select.innerHTML = Array.from(c1Set).map(c => `<option value="${c}">${c}</option>`).join('') + '<option value="NEW_CAT">➕ 新增分類</option>';
+        
+        const uncatList = db.filter(x => x.C1 === '未分類').slice(0, 50);
+        const listDiv = document.getElementById('catList');
+        listDiv.innerHTML = uncatList.map(item => `
+            <label style="display:block; padding:5px; border-bottom:1px solid #eee;">
+                <input type="checkbox" class="cat-checkbox" data-id="${item.ID}" data-name="${item.Name}"> ${item.Name}
+            </label>
+        `).join('');
+    }
+
+    function toggleNewCategoryInput() {
+        const sel = document.getElementById('catSelect').value;
+        document.getElementById('catNewInput').style.display = sel === 'NEW_CAT' ? 'block' : 'none';
+    }
+
+    function applyCategory() {
+        let newCat = document.getElementById('catSelect').value;
+        if (newCat === 'NEW_CAT') {
+            newCat = document.getElementById('catNewInput').value.trim();
+            if (!newCat) return alert('請輸入新分類名稱');
+        }
+
+        const checkboxes = document.querySelectorAll('.cat-checkbox:checked');
+        if (checkboxes.length === 0) return alert('請勾選項目');
+
+        checkboxes.forEach(cb => {
+            const item = db.find(x => x.ID === cb.dataset.id && x.Name === cb.dataset.name);
+            if (item) item.C1 = newCat;
+        });
+
+        saveDB();
+        document.getElementById('catNewInput').value = '';
+        renderCategoryPage();
+    }
+
+    // --- 9. 活動 (Event) ---
+    function renderEventPage() {
+        const eventSet = new Set();
+        db.forEach(x => { if(x.Event) x.Event.split('/').forEach(e => { if(e) eventSet.add(e); }) });
+        
+        const tagDiv = document.getElementById('eventTagList');
+        tagDiv.innerHTML = Array.from(eventSet).map(e => 
+            `<button onclick="deleteEventGlobal('${e}')" style="background:var(--pink); color:white; border:none; border-radius:15px;">✖ ${e}</button>`
+        ).join('');
+    }
+
+    function deleteEventGlobal(eventName) {
+        if(confirm(`確認從所有商品中清除活動「${eventName}」？`)) {
+            db.forEach(item => {
+                if(item.Event && item.Event.includes(eventName)) {
+                    item.Event = item.Event.split('/').filter(e => e !== eventName).join('/');
+                }
+            });
+            saveDB(); renderEventPage();
+        }
+    }
+
+    function runEventSearch() {
+        const lines = document.getElementById('eventSearchInput').value.split(/\r?\n/).filter(x => x.trim());
+        const resDiv = document.getElementById('eventMatchResult');
+        if (lines.length === 0) { resDiv.innerHTML = ''; return; }
+
+        let html = '';
+        lines.forEach(line => {
+            const matches = db.filter(x => x.Name.includes(line));
+            if (matches.length === 0) {
+                html += `<div style="color:var(--red);">${line} - 未搜尋到</div>`;
+            } else {
+                html += `<div><strong>${line}:</strong> `;
+                html += matches.map((m, i) => `${m.Name} <span style="font-size:0.8em;color:#666;">(${i+1}/${matches.length})</span>`).join(', ');
+                html += `</div>`;
+            }
+        });
+        resDiv.innerHTML = html;
+    }
+
+    function applyEvent() {
+        const eventName = document.getElementById('eventName').value.trim();
+        if(!eventName) return alert('請輸入活動名稱');
+        
+        const lines = document.getElementById('eventSearchInput').value.split(/\r?\n/).filter(x => x.trim());
+        let updatedCount = 0;
+
+        lines.forEach(line => {
+            const matches = db.filter(x => x.Name.includes(line));
+            matches.forEach(m => {
+                m.Event = mergeSplitStr(m.Event, eventName);
+                updatedCount++;
+            });
+        });
+
+        if (updatedCount > 0) {
+            saveDB();
+            document.getElementById('eventSearchInput').value = '';
+            document.getElementById('eventName').value = '';
+            runEventSearch();
+            renderEventPage();
+            alert(`已成功將 ${updatedCount} 筆資料加入活動！`);
+        } else {
+            alert('沒有配對到任何可加入的資料。');
+        }
+    }
+
+</script>
+</body>
+</html>
