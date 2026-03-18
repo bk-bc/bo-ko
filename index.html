@@ -1,759 +1,724 @@
 <meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>智慧零售管理系統</title>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-<style>
-    :root {
-        --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --info: #17a2b8;
-        --dark: #343a40; --light: #f8f9fa; --pink: #ff66b2; --yellow: #ffeb3b; --lightblue: #87cefa;
-        --bg: #f4f7f6; --card-bg: #ffffff;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg); color: #333; padding-bottom: 60px; }
-    
-    /* Sticky Header */
-    header {
-        position: sticky; top: 0; z-index: 1000; background: var(--dark); color: white; padding: 10px 15px;
-        display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .header-stats { font-size: 0.85em; color: #ccc; }
-    .file-actions { display: flex; gap: 5px; }
-    .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; background: var(--primary); font-size: 14px; white-space: nowrap; }
-    .btn:active { opacity: 0.8; }
-    .btn-success { background: var(--success); } .btn-danger { background: var(--danger); }
-    .btn-warning { background: var(--warning); color: #333; } .btn-info { background: var(--info); }
-    .btn-pink { background: var(--pink); color: #fff; } .btn-yellow { background: var(--yellow); color: #333; }
-    .btn-lightblue { background: var(--lightblue); color: #333; } .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-    
-    /* Navigation */
-    nav {
-        display: flex; flex-wrap: wrap; background: #fff; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        position: sticky; top: 70px; z-index: 999;
-    }
-    .nav-btn { flex: 1 1 22%; margin: 3px; padding: 10px 5px; text-align: center; background: #e9ecef; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
-    .nav-btn.active { background: var(--primary); color: white; }
-    
-    /* Content Areas */
-    main { padding: 15px; }
-    .page { display: none; }
-    .page.active { display: block; }
-    
-    /* Form Elements */
-    input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-    textarea { resize: vertical; min-height: 80px; }
-    
-    /* Cards */
-    .card { background: var(--card-bg); border-radius: 6px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .card-title { font-weight: bold; font-size: 1.1em; }
-    .card-sub { font-size: 0.85em; color: #666; }
-    .barcode-container { text-align: center; margin: 10px 0; background: #fff; padding: 5px; border-radius: 4px; }
-    .card-actions { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
-    
-    /* Specific overrides */
-    .restock-marked { background-color: var(--dark) !important; color: white !important; }
-    .qa-red { background-color: #ffe6e6 !important; border-left: 4px solid red; }
-    .qa-yellow { background-color: #fffde7 !important; border-left: 4px solid #ffeb3b; }
-    .errata-group { border: 2px dashed #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px; }
-    .locked-btn { opacity: 0.6; cursor: not-allowed; border: 2px solid #333; }
-    .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .flex-1 { flex: 1; }
-    
-    /* Hidden file input */
-    #csvFileInput { display: none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧零售管理系統 v5.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+        :root {
+            --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107;
+            --pink: hotpink; --yellow: gold; --lightblue: lightblue;
+            --bg-color: #f4f6f9; --card-bg: #ffffff;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; background-color: var(--bg-color); padding-bottom: 60px; }
+        
+        /* Sticky Header */
+        header {
+            position: sticky; top: 0; z-index: 1000; background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px;
+        }
+        .header-stats { font-size: 0.85em; color: #666; margin-bottom: 5px; }
+        .nav-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+        .nav-buttons button { flex: 1 1 auto; padding: 8px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; }
+        .nav-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* Layout & Cards */
+        .container { padding: 0 10px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; word-break: break-all; }
+        .card-sub { font-size: 0.9em; color: #555; margin-bottom: 8px; }
+        .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        
+        /* Inputs & Buttons */
+        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: black; }
+        .btn-pink { background: var(--pink); color: white; }
+        .btn-yellow { background: var(--yellow); color: black; }
+        .btn-lightblue { background: var(--lightblue); color: black; }
+        
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;}
+        .flex-row > * { flex: 1; }
+        
+        svg.barcode { width: 100%; max-height: 80px; }
+
+        /* QA Print Styles */
+        @media print {
+            header, .no-print, nav, .card-actions { display: none !important; }
+            body { background: white; padding: 0; }
+            .print-container { column-count: 2; column-gap: 20px; }
+            .card { break-inside: avoid; border: 1px solid #000; box-shadow: none; margin-bottom: 10px; }
+            .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
+            .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
+        }
+        .bg-danger-light { background-color: #ffe6e6; }
+        .bg-warning-light { background-color: #fff3cd; }
+    </style>
 </head>
 <body>
 
-<header id="app-header">
-    <div class="header-top">
-        <h3>智慧零售管理系統</h3>
-        <div class="file-actions">
-            <button class="btn btn-warning" onclick="document.getElementById('csvFileInput').click()">匯入 CSV</button>
-            <button class="btn btn-info" onclick="exportCSV()">匯出 CSV</button>
-            <input type="file" id="csvFileInput" accept=".csv" onchange="importCSV(event)">
-        </div>
+<header>
+    <div class="header-stats" id="headerStats">資料統計：總導入 0 | 合併數 0 | 總筆數 0</div>
+    <div class="flex-row">
+        <input type="file" id="csvFile" accept=".csv" style="flex: 2; margin-bottom: 0;">
+        <button class="btn-primary" onclick="importCSV()">匯入 CSV</button>
+        <button class="btn-success" onclick="exportCSV()">匯出 CSV</button>
     </div>
-    <div class="header-stats" id="headerStats">
-        總導入數: 0 | 合併數: 0 | 合併後總數: 0
+    <div class="nav-buttons" style="margin-top: 10px;">
+        <button onclick="switchTab('add')" id="btn-add" class="active">新增</button>
+        <button onclick="switchTab('search')" id="btn-search">搜尋</button>
+        <button onclick="switchTab('error')" id="btn-error">勘誤</button>
+        <button onclick="switchTab('qa')" id="btn-qa">品保</button>
+        <button onclick="switchTab('classify')" id="btn-classify">分類</button>
+        <button onclick="switchTab('activity')" id="btn-activity">活動</button>
     </div>
 </header>
 
-<nav id="app-nav">
-    <button class="nav-btn active" onclick="switchPage('add')">新增</button>
-    <button class="nav-btn" onclick="switchPage('search')">搜尋</button>
-    <button class="nav-btn" onclick="switchPage('errata')">勘誤</button>
-    <button class="nav-btn" onclick="switchPage('fresh')">鮮食</button>
-    <button class="nav-btn" onclick="switchPage('qa')">品保</button>
-    <button class="nav-btn" onclick="switchPage('restock')">補貨</button>
-    <button class="nav-btn" onclick="switchPage('category')">分類</button>
-    <button class="nav-btn" onclick="switchPage('activity')">活動</button>
-</nav>
-
-<main id="app-content">
-    <section id="page-add" class="page active">
+<div class="container">
+    <div id="add" class="section active">
+        <h3>新增資料</h3>
         <select id="addType">
-            <option value="EAN8">EAN8</option>
-            <option value="EAN13" selected>EAN13</option>
-            <option value="UPCA">UPCA</option>
-            <option value="UPCE">UPCE</option>
-            <option value="I35">I35</option>
-            <option value="I24">I24</option>
+            <option value="EAN8">EAN8</option><option value="EAN13">EAN13</option>
+            <option value="UPCA">UPCA</option><option value="UPCE">UPCE</option>
+            <option value="I35">I35</option><option value="I24">I24</option>
         </select>
-        <textarea id="addInput" placeholder="請輸入資料，每行格式為：ID/Name"></textarea>
-        <button class="btn btn-success" style="width:100%;" onclick="addProducts()">新增資料</button>
-    </section>
+        <textarea id="addInput" rows="6" placeholder="請輸入資料，每行格式：ID/Name"></textarea>
+        <button class="btn-primary" onclick="addItems()" style="width: 100%;">新增</button>
+    </div>
 
-    <section id="page-search" class="page">
+    <div id="search" class="section">
+        <div class="flex-row no-print">
+            <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
+            <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
+            <button class="btn-success" onclick="clearOrder()">已訂貨</button>
+        </div>
+        <div id="searchFilters" class="no-print">
+            <div class="flex-row">
+                <select id="searchC1" onchange="renderSearch()"><option value="">C1: 全部搜尋</option></select>
+                <select id="searchEvent" onchange="renderSearch()"><option value="">Event: 全部搜尋</option></select>
+            </div>
+            <div class="flex-row">
+                <input type="text" id="searchKeyword1" placeholder="關鍵字 1 (ID/Name)" oninput="renderSearch()">
+                <input type="text" id="searchKeyword2" placeholder="關鍵字 2 (ID/Name)" oninput="renderSearch()">
+            </div>
+        </div>
+        <div class="header-stats" id="searchCount"></div>
+        <div id="searchResult"></div>
+    </div>
+
+    <div id="error" class="section">
+        <div class="header-stats" id="errorStats"></div>
+        <div id="errorResult"></div>
+    </div>
+
+    <div id="qa" class="section">
+        <div class="flex-row no-print">
+            <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
+            <button class="btn-primary" onclick="window.print()">列印</button>
+        </div>
+        <div id="qaResult" class="print-container"></div>
+    </div>
+
+    <div id="classify" class="section">
         <div class="flex-row">
-            <select id="searchC1" class="flex-1" onchange="execSearch()"><option value="">全部搜尋 (C1)</option></select>
-            <select id="searchEvent" class="flex-1" onchange="execSearch()"><option value="">全部搜尋 (Event)</option></select>
+            <select id="classifySelect" onchange="handleClassifySelect()">
+                <option value="">選擇分類</option>
+                <option value="NEW_CATEGORY">-- 新增分類 --</option>
+            </select>
+            <input type="text" id="newCategoryInput" placeholder="輸入新分類名稱" style="display:none; flex:1; margin-bottom:0;">
+            <button class="btn-primary" onclick="applyClassification()">分類</button>
         </div>
-        <div class="flex-row">
-            <input type="text" id="searchKeyword1" class="flex-1" placeholder="關鍵字1 (ID/Name)" oninput="execSearch()">
-            <input type="text" id="searchKeyword2" class="flex-1" placeholder="關鍵字2 (ID/Name)" oninput="execSearch()">
-        </div>
-        <div id="searchCount" style="margin-bottom: 10px; font-weight: bold; color: var(--primary);"></div>
-        <div id="searchResults"></div>
-    </section>
+        <div id="classifyResult"></div>
+    </div>
 
-    <section id="page-errata" class="page">
-        <div id="errataStats" style="margin-bottom:10px; font-weight:bold;"></div>
-        <div id="errataResults"></div>
-    </section>
-
-    <section id="page-fresh" class="page">
-        <input type="text" id="freshSearch" placeholder="搜尋鮮食名稱 (Type I35/I24)" oninput="execFreshSearch()">
-        <div id="freshResults"></div>
-    </section>
-
-    <section id="page-qa" class="page">
-        <div class="flex-row" style="margin-bottom:10px;">
-            <label style="font-weight:bold; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" id="qaBarcodeToggle" onchange="renderQA()" checked style="width:auto; margin:0;">
-                顯示條碼
-            </label>
-        </div>
-        <div id="qaResults"></div>
-    </section>
-
-    <section id="page-restock" class="page">
-        <button class="btn btn-danger" style="width:100%; margin-bottom:10px;" onclick="clearRestock()">清除補貨清單</button>
-        <div id="restockResults"></div>
-    </section>
-
-    <section id="page-category" class="page">
-        <div class="flex-row">
-            <select id="catSelect" class="flex-1" onchange="handleCatSelectChange()">
-                </select>
-            <button class="btn btn-primary" onclick="applyCategory()">再分類</button>
-        </div>
-        <input type="text" id="catNewInput" placeholder="輸入新分類名稱" style="display:none;">
-        <div id="catResults" style="margin-top:10px;"></div>
-    </section>
-
-    <section id="page-activity" class="page">
-        <div id="activityTags" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
-        <input type="text" id="actInputStr" placeholder="要加入的活動字串">
-        <textarea id="actSearchArea" placeholder="輸入多行名稱以模糊搜尋" oninput="execActSearch()"></textarea>
-        <div id="actPreview" style="background:#fff; padding:10px; border-radius:4px; margin-bottom:10px; font-size:14px; max-height:150px; overflow-y:auto;"></div>
-        <button class="btn btn-success" style="width:100%;" onclick="applyActivity()">加入活動</button>
-    </section>
-</main>
+    <div id="activity" class="section">
+        <div id="activityTags" class="nav-buttons" style="margin-bottom: 10px;"></div>
+        <input type="text" id="activityInput" placeholder="輸入活動名稱">
+        <textarea id="activitySearch" rows="4" placeholder="貼上多行關鍵字搜尋 Name" oninput="searchActivity()"></textarea>
+        <div id="activitySearchResult" style="margin-bottom:10px; font-size:0.9em; color:#555;"></div>
+        <button class="btn-primary" onclick="addActivity()" style="width: 100%;">加入活動</button>
+    </div>
+</div>
+<input type="date" id="hiddenDatePicker" style="position:fixed; top:-100px; left:-100px; opacity:0;">
 
 <script>
-    // --- 核心狀態 ---
-    let products = [];
-    let restockList = []; // 揮發性
-    let stats = { imported: 0, merged: 0, total: 0 };
+    // --- 核心資料狀態 ---
+    let db = []; 
+    let stats = { imported: 0, merged: 0 };
 
     // --- 初始化 ---
     window.onload = () => {
-        loadData();
-        renderStats();
-        initPages();
+        const stored = localStorage.getItem('retailDB');
+        if (stored) db = JSON.parse(stored);
+        updateStatsUI();
+        renderAddType();
     };
 
-    function loadData() {
-        const data = localStorage.getItem('retail_products');
-        if (data) {
-            products = JSON.parse(data);
-            cleanData();
-            stats.total = products.length;
-        }
-    }
-
     function saveData() {
-        localStorage.setItem('retail_products', JSON.stringify(products));
-        stats.total = products.length;
-        renderStats();
+        localStorage.setItem('retailDB', JSON.stringify(db));
+        updateStatsUI();
     }
 
-    function cleanData() {
-        // 清理品保 Expiry 中的非數字污染 (例如 EAN8)
-        products.forEach(p => {
-            if (p.Expiry) {
-                p.Expiry = p.Expiry.split('/')
-                    .filter(d => /^\d{8}$/.test(d))
-                    .join('/');
-            }
-        });
-    }
-
-    function renderStats() {
-        document.getElementById('headerStats').innerText = `總導入數: ${stats.imported} | 合併數: ${stats.merged} | 合併後總數: ${stats.total}`;
-    }
-
-    function switchPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`page-${pageId}`).classList.add('active');
-        event.target.classList.add('active');
+    function switchTab(tabId) {
+        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-buttons button').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.getElementById(`btn-${tabId}`).classList.add('active');
         
-        // 頁面切換時的初始化
-        if (pageId === 'search') initSearchFilters();
-        if (pageId === 'errata') renderErrata();
-        if (pageId === 'fresh') { document.getElementById('freshSearch').value = ''; document.getElementById('freshResults').innerHTML = ''; }
-        if (pageId === 'qa') renderQA();
-        if (pageId === 'restock') renderRestock();
-        if (pageId === 'category') renderCategory();
-        if (pageId === 'activity') renderActivity();
+        if(tabId === 'search') { document.getElementById('searchKeyword1').value=''; document.getElementById('searchKeyword2').value=''; populateSearchDropdowns(); renderSearch(); }
+        if(tabId === 'error') renderError();
+        if(tabId === 'qa') renderQA();
+        if(tabId === 'classify') renderClassify();
+        if(tabId === 'activity') renderActivity();
     }
 
-    // --- 工具函式 ---
-    function uniqueArray(arr) { return [...new Set(arr.filter(Boolean))]; }
-    
-    function mergeStrings(s1, s2) {
-        let arr1 = (s1 || '').split('/');
-        let arr2 = (s2 || '').split('/');
-        return uniqueArray([...arr1, ...arr2]).join('/');
-    }
-
-    function generateBarcodeHTML(id, type, val, width=1.5, height=50) {
-        // I35/I24 預設非鮮食頁面轉 EAN8
-        let format = type.toUpperCase();
-        if (format === 'I35' || format === 'I24') format = 'EAN8';
-        
-        let svgId = `bc_${id}_${Date.now()}_${Math.floor(Math.random()*1000)}`;
-        // 使用 setTimeout 確保 DOM 渲染後再繪製
-        setTimeout(() => {
-            try {
-                JsBarcode(`#${svgId}`, val, { format: format, width: width, height: height, displayValue: true, margin: 0 });
-            } catch (e) {
-                document.getElementById(svgId).outerHTML = `<span style="color:red; font-size:12px;">條碼錯誤:${val}</span>`;
-            }
-        }, 10);
-        return `<div class="barcode-container"><svg id="${svgId}"></svg></div>`;
-    }
-
-    function calculateEAN13Checksum(code) {
-        let sum = 0;
-        for (let i = 0; i < 12; i++) {
-            sum += parseInt(code[i]) * (i % 2 === 0 ? 1 : 3);
+    // --- 共用工具 ---
+    function cleanArrayStr(str, isDate = false, itemName = '', itemID = '') {
+        if (!str) return '';
+        let arr = str.split('/').map(s => s.trim()).filter(Boolean);
+        if (isDate) {
+            arr = arr.filter(d => /^20\d{6}$/.test(d));
+        } else {
+            // Regex排除與Name或ID完全相同之Event
+            const exactMatchRegex = new RegExp(`^(${escapeRegExp(itemName)}|${escapeRegExp(itemID)})$`, 'i');
+            arr = arr.filter(e => !exactMatchRegex.test(e));
         }
-        let remainder = sum % 10;
-        return remainder === 0 ? 0 : 10 - remainder;
+        return [...new Set(arr)].join('/');
     }
 
-    function getJulianDate(offsetDays = 0) {
-        let date = new Date();
-        date.setDate(date.getDate() + offsetDays);
-        let start = new Date(date.getFullYear(), 0, 0);
-        let diff = date - start + (start.getTimezoneOffset() - date.getTimezoneOffset()) * 60 * 1000;
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function updateStatsUI() {
+        document.getElementById('headerStats').innerText = `資料統計：總導入 ${stats.imported} | 合併數 ${stats.merged} | 總筆數 ${db.length}`;
+    }
+
+    function getJulian(addDays = 0) {
+        let d = new Date(); d.setDate(d.getDate() + addDays);
+        let start = new Date(d.getFullYear(), 0, 0);
+        let diff = (d - start) + ((start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000);
         let oneDay = 1000 * 60 * 60 * 24;
-        let day = Math.floor(diff / oneDay);
-        return day.toString().padStart(3, '0');
+        return Math.floor(diff / oneDay).toString().padStart(3, '0');
     }
 
-    // --- CSV 處理 ---
-    function importCSV(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const text = event.target.result;
-            const lines = text.split(/\r?\n/).filter(line => line.trim());
-            // 略過 Header 假設為 Type, ID, Name, C1, Expiry, Event
-            const isHeader = lines[0].toLowerCase().includes('type');
-            const startIndex = isHeader ? 1 : 0;
-            
-            let currentImported = 0;
-            let currentMerged = 0;
+    function renderBarcode(targetId, value, format) {
+        try {
+            JsBarcode(`#${targetId}`, value, {
+                format: format.includes('EAN') || format.includes('UPC') ? format : 'CODE128',
+                displayValue: true, height: 40, margin: 0, width: 2
+            });
+        } catch (e) {
+            console.error("Barcode error:", e);
+        }
+    }
 
-            for (let i = startIndex; i < lines.length; i++) {
-                // 簡易 CSV parse，假設沒有內嵌逗號
-                let cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-                if (cols.length < 3) continue;
+    // --- CSV 邏輯 ---
+    function importCSV() {
+        const file = document.getElementById('csvFile').files[0];
+        if (!file) return alert('請選擇CSV檔案');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split('\n');
+            let newImportCount = 0; let newMergeCount = 0;
+            // 跳過標題行
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                // 處理CSV可能帶有引號的逗號，簡易版分割
+                const parts = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+                if (parts.length < 7) continue;
                 
-                let newItem = {
-                    Type: (cols[0] || '').toUpperCase(),
-                    ID: cols[1] || '',
-                    Name: cols[2] || '',
-                    C1: cols[3] || '未分類',
-                    Expiry: cols[4] || '',
-                    Event: cols[5] || ''
-                };
-                
-                currentImported++;
-                
-                let existing = products.find(p => p.Type === newItem.Type && p.ID === newItem.ID && p.Name === newItem.Name && p.C1 === newItem.C1);
-                
-                if (existing) {
-                    existing.Event = mergeStrings(existing.Event, newItem.Event);
-                    existing.Expiry = mergeStrings(existing.Expiry, newItem.Expiry);
-                    currentMerged++;
+                let [Type, ID, Name, C1, Expiry, Event, Locked] = parts;
+                Type = Type.toUpperCase();
+                Locked = (Locked === 'True') ? 'True' : 'False';
+                newImportCount++;
+
+                let existingIndex = db.findIndex(item => item.ID === ID);
+                if (existingIndex > -1) {
+                    let ex = db[existingIndex];
+                    let isConflict = ex.Type !== Type || ex.Name !== Name || ex.C1 !== C1;
+                    
+                    if (!isConflict) {
+                        // 完全相同，合併 Event/Expiry
+                        ex.Expiry = cleanArrayStr(`${ex.Expiry}/${Expiry}`, true);
+                        ex.Event = cleanArrayStr(`${ex.Event}/${Event}`, false, ex.Name, ex.ID);
+                        if(Locked === 'True') ex.Locked = 'True';
+                        newMergeCount++;
+                    } else {
+                        // 有衝突，檢查 Locked
+                        if (Locked === 'True' || ex.Locked === 'True') {
+                            let master = Locked === 'True' ? {Type, ID, Name, C1} : {Type:ex.Type, ID:ex.ID, Name:ex.Name, C1:ex.C1};
+                            ex.Type = master.Type; ex.Name = master.Name; ex.C1 = master.C1;
+                            ex.Expiry = cleanArrayStr(`${ex.Expiry}/${Expiry}`, true);
+                            ex.Event = cleanArrayStr(`${ex.Event}/${Event}`, false, ex.Name, ex.ID);
+                            ex.Locked = 'True';
+                            newMergeCount++;
+                        } else {
+                            // 無鎖定且衝突，直接新增（勘誤頁面處理）
+                            db.push({Type, ID, Name, C1, Expiry: cleanArrayStr(Expiry, true), Event: cleanArrayStr(Event, false, Name, ID), Locked});
+                        }
+                    }
                 } else {
-                    products.push(newItem);
+                    db.push({Type, ID, Name, C1, Expiry: cleanArrayStr(Expiry, true), Event: cleanArrayStr(Event, false, Name, ID), Locked});
                 }
             }
-            stats.imported += currentImported;
-            stats.merged += currentMerged;
-            cleanData();
+            stats.imported += newImportCount;
+            stats.merged += newMergeCount;
             saveData();
-            e.target.value = ''; // reset
-            alert('CSV 匯入完成');
-            initPages();
+            alert(`匯入完成！新增/掃描 ${newImportCount} 筆，合併 ${newMergeCount} 筆。`);
         };
         reader.readAsText(file);
     }
 
     function exportCSV() {
-        let csvContent = "Type,ID,Name,C1,Expiry,Event\n";
-        products.forEach(p => {
-            // 防護字串內的逗號
-            let row = [p.Type, p.ID, `"${p.Name}"`, `"${p.C1}"`, p.Expiry, `"${p.Event}"`].join(',');
-            csvContent += row + "\n";
+        let csv = "Type,ID,Name,C1,Expiry,Event,Locked\n";
+        db.forEach(row => {
+            csv += `"${row.Type}","${row.ID}","${row.Name}","${row.C1}","${row.Expiry}","${row.Event}","${row.Locked}"\n`;
         });
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `retail_data_${new Date().toISOString().slice(0,10)}.csv`;
+        link.download = `零售資料庫_${new Date().toISOString().slice(0,10)}.csv`;
         link.click();
     }
 
-    function initPages() {
-        if (document.getElementById('page-search').classList.contains('active')) initSearchFilters();
-        if (document.getElementById('page-category').classList.contains('active')) renderCategory();
-    }
-
     // --- 1. 新增功能 ---
-    function addProducts() {
+    function renderAddType() { } // 靜態 HTML 已處理
+    function addItems() {
         const type = document.getElementById('addType').value;
         const text = document.getElementById('addInput').value;
-        if (!text.trim()) return;
-        
-        const lines = text.split('\n');
+        const lines = text.split('\n').filter(l => l.trim());
+        let added = 0;
         lines.forEach(line => {
-            const [id, name] = line.split('/');
-            if (id && name) {
-                products.push({ Type: type, ID: id.trim(), Name: name.trim(), C1: '未分類', Expiry: '', Event: '' });
+            const [ID, Name] = line.split('/');
+            if (ID && Name) {
+                db.push({ Type: type, ID: ID.trim(), Name: Name.trim(), C1: '未分類', Expiry: '', Event: '', Locked: 'False' });
+                added++;
             }
         });
         saveData();
         document.getElementById('addInput').value = '';
-        alert('新增成功');
+        alert(`成功新增 ${added} 筆資料`);
     }
 
     // --- 2. 搜尋功能 ---
-    function initSearchFilters() {
-        let c1s = uniqueArray(products.map(p => p.C1));
-        let events = uniqueArray(products.flatMap(p => (p.Event||'').split('/')));
-        
-        let c1Html = '<option value="">全部搜尋 (C1)</option>';
-        c1s.forEach(c => c1Html += `<option value="${c}">${c}</option>`);
+    function populateSearchDropdowns() {
+        const c1Set = new Set(), eventSet = new Set();
+        db.forEach(item => {
+            if(item.C1) c1Set.add(item.C1);
+            if(item.Event) item.Event.split('/').forEach(e => { if(e) eventSet.add(e); });
+        });
+        let c1Html = `<option value="">C1: 全部搜尋</option>`;
+        [...c1Set].forEach(c => c1Html += `<option value="${c}">${c}</option>`);
         document.getElementById('searchC1').innerHTML = c1Html;
 
-        let evHtml = '<option value="">全部搜尋 (Event)</option>';
-        events.forEach(e => evHtml += `<option value="${e}">${e}</option>`);
+        let evHtml = `<option value="">Event: 全部搜尋</option>`;
+        [...eventSet].forEach(e => evHtml += `<option value="${e}">${e}</option>`);
         document.getElementById('searchEvent').innerHTML = evHtml;
-        execSearch();
     }
 
-    function execSearch() {
+    function quickFilter(status) {
+        document.getElementById('freshFoodCheck').checked = false;
+        document.getElementById('searchEvent').value = status;
+        renderSearch();
+    }
+    
+    function clearOrder() {
+        db.forEach(item => {
+            if(item.Event.includes('待訂貨')) {
+                item.Event = item.Event.split('/').filter(e => e !== '待訂貨').join('/');
+            }
+        });
+        saveData();
+        renderSearch();
+    }
+
+    function renderSearch() {
+        const isFresh = document.getElementById('freshFoodCheck').checked;
         const c1 = document.getElementById('searchC1').value;
         const ev = document.getElementById('searchEvent').value;
-        const k1 = document.getElementById('searchKeyword1').value.toLowerCase();
-        const k2 = document.getElementById('searchKeyword2').value.toLowerCase();
-        
-        const resDiv = document.getElementById('searchResults');
-        const countDiv = document.getElementById('searchCount');
-        
-        if (!c1 && !ev && k1.length < 1 && k2.length < 1) {
-            resDiv.innerHTML = '';
-            countDiv.innerText = '';
-            return;
-        }
+        const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
+        const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
+        const resDiv = document.getElementById('searchResult');
+        const searchFilters = document.getElementById('searchFilters');
 
-        let filtered = products.filter(p => {
-            if (c1 && p.C1 !== c1) return false;
-            if (ev && !(p.Event||'').split('/').includes(ev)) return false;
-            
-            let matchString = `${p.ID} ${p.Name}`.toLowerCase();
-            if (k1 && !matchString.includes(k1)) return false;
-            if (k2 && !matchString.includes(k2)) return false;
-            return true;
-        });
+        resDiv.innerHTML = '';
+        
+    if (isFresh) {
+        // 鮮食模式：隱藏下拉選單與第二個框，只留第一個關鍵字輸入框
+        document.getElementById('searchC1').style.display = 'none';
+        document.getElementById('searchEvent').style.display = 'none';
+        document.getElementById('searchKeyword2').style.display = 'none';
+        searchFilters.style.display = 'block'; // 確保容器是開啟的
 
-        countDiv.innerText = `剩餘筆數: ${Math.min(filtered.length, 50)} / ${filtered.length}`;
-        
-        let html = '';
-        filtered.slice(0, 50).forEach((p, idx) => {
-            // Date picker ID
-            let dpId = `dp_${p.ID}_${idx}`;
-            html += `
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">${p.Name}</div>
-                        <div class="card-sub">C1: ${p.C1} | Event: ${p.Event || '無'}</div>
-                    </div>
-                </div>
-                ${generateBarcodeHTML(idx, p.Type, p.ID)}
-                <div class="card-actions">
-                    <button class="btn btn-outline" onclick="actionReclassify('${p.ID}')">✋</button>
-                    <input type="date" id="${dpId}" style="width:130px; margin:0; padding:2px;" onchange="actionQA('${p.ID}', this.value)">
-                    <button class="btn btn-outline ${restockList.some(r=>r.ID===p.ID)?'restock-marked':''}" onclick="actionRestock(this, '${p.ID}', '${p.Name}', '${p.Type}')">🛒</button>
-                    <button class="btn btn-danger" onclick="actionDelete('${p.ID}')">🗑️</button>
-                </div>
-            </div>`;
-        });
-        resDiv.innerHTML = html;
-    }
+        if (kw1.length < 1) {
+            document.getElementById('searchCount').innerText = '請輸入鮮食名稱進行搜尋...';
+            return;
+        }
+    } else {
+        // 一般模式：全部恢復顯示
+        document.getElementById('searchC1').style.display = 'block';
+        document.getElementById('searchEvent').style.display = 'block';
+        document.getElementById('searchKeyword2').style.display = 'block';
+        searchFilters.style.display = 'block';
 
-    function actionReclassify(id) {
-        products.filter(p => p.ID === id).forEach(p => p.C1 = '未分類');
-        saveData(); execSearch();
-    }
-    function actionQA(id, dateStr) {
-        if (!dateStr) return;
-        let formatted = dateStr.replace(/-/g, '');
-        products.filter(p => p.ID === id).forEach(p => {
-            p.Expiry = mergeStrings(p.Expiry, formatted);
-        });
-        saveData(); cleanData(); execSearch();
-    }
-    function actionRestock(btn, id, name, type) {
-        if (!restockList.some(r => r.ID === id)) {
-            restockList.push({ID: id, Name: name, Type: type});
-            btn.classList.add('restock-marked');
-        }
-    }
-    function actionDelete(id) {
-        if (confirm('確定刪除此筆資料？')) {
-            products = products.filter(p => p.ID !== id);
-            saveData(); execSearch();
-        }
-    }
+        if (kw1.length < 1 && kw2.length < 1 && !c1 && !ev) {
+            document.getElementById('searchCount').innerText = '輸入關鍵字或選擇篩選項目...';
+            return;
+        }
+    }
 
-    // --- 3. 勘誤功能 ---
-    function renderErrata() {
-        let counts = {};
-        products.forEach(p => { counts[p.ID] = (counts[p.ID] || 0) + 1; });
-        
-        let dupIds = Object.keys(counts).filter(id => counts[id] > 1);
-        let dupItemsCount = dupIds.reduce((sum, id) => sum + counts[id], 0);
-        
-        document.getElementById('errataStats').innerText = `ID已重複總批數: ${dupIds.length} | 總筆數: ${dupItemsCount}`;
-        
-        let html = '';
-        dupIds.forEach(id => {
-            let group = products.filter(p => p.ID === id);
-            let types = uniqueArray(group.map(p => p.Type));
-            let names = uniqueArray(group.map(p => p.Name));
-            let c1s = uniqueArray(group.map(p => p.C1));
-            
-            // 如果各欄位只有一種，代表準備合併
-            if (types.length === 1 && names.length === 1 && c1s.length === 1) {
-                // 自動合併
-                let mergedEvent = uniqueArray(group.flatMap(p => (p.Event||'').split('/'))).join('/');
-                let mergedExpiry = uniqueArray(group.flatMap(p => (p.Expiry||'').split('/'))).join('/');
-                
-                // 刪除舊的，新增一個合併後的
-                products = products.filter(p => p.ID !== id);
-                products.push({
-                    Type: types[0], ID: id, Name: names[0], C1: c1s[0], Expiry: mergedExpiry, Event: mergedEvent
-                });
-                return; // 跳過渲染，因為已經合併
+
+        let filtered = db.filter(item => {
+            if (isFresh) {
+                if (item.Type !== 'I24' && item.Type !== 'I35') return false;
+                const match1 = kw1 ? item.Name.toLowerCase().includes(kw1) : true;
+                const match2 = kw2 ? item.Name.toLowerCase().includes(kw2) : true;
+                return (kw1 || kw2) && match1 && match2;
+            } else {
+                if (c1 && item.C1 !== c1) return false;
+                if (ev && !item.Event.split('/').includes(ev)) return false;
+                let textMatch = (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
+                                (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
+                return textMatch;
             }
+        });
 
-            html += `<div class="card errata-group">
-                <div class="card-title">ID: ${id}</div>`;
-            
-            // Type Buttons (Pink)
-            html += `<div style="margin:5px 0;"><small>Type:</small> `;
-            types.forEach(t => {
-                let locked = types.length === 1 ? 'locked-btn' : '';
-                html += `<button class="btn btn-pink ${locked}" onclick="resolveErrata('${id}', 'Type', '${t}')">${t}</button> `;
-            });
-            html += `</div>`;
-            
-            // Name Buttons (Yellow)
-            html += `<div style="margin:5px 0;"><small>Name:</small> `;
-            names.forEach(n => {
-                let locked = names.length === 1 ? 'locked-btn' : '';
-                html += `<button class="btn btn-yellow ${locked}" style="white-space:normal; text-align:left;" onclick="resolveErrata('${id}', 'Name', '${n.replace(/'/g, "\\'")}')">${n}</button> `;
-            });
-            html += `</div>`;
+        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 50 ? '50+' : filtered.length} (顯示上限50筆)`;
+        filtered = filtered.slice(0, 50);
 
-            // C1 Buttons (Light Blue)
-            html += `<div style="margin:5px 0;"><small>C1:</small> `;
-            c1s.forEach(c => {
-                let locked = c1s.length === 1 ? 'locked-btn' : '';
-                html += `<button class="btn btn-lightblue ${locked}" onclick="resolveErrata('${id}', 'C1', '${c.replace(/'/g, "\\'")}')">${c}</button> `;
-            });
-            html += `</div>`;
+        filtered.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            if (isFresh) {
+                card.innerHTML = `
+                    <div class="card-title">${item.Name} (${item.Type})</div>
+                    <div class="card-actions">
+                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${idx}')">今日到期</button>
+                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${idx}')">明日到期</button>
+                        ${item.Type === 'I35' ? `
+                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${idx}')">一配</button>
+                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${idx}')">二配</button>
+                        ` : ''}
+                    </div>
+                    <div style="text-align:center; margin-top:10px;"><svg id="bc_${idx}" class="barcode"></svg></div>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="card-title">${item.Name}</div>
+                    <div class="card-sub">${item.C1} | ${item.Event}</div>
+                    <div style="text-align:center;"><svg id="bc_${idx}" class="barcode"></svg></div>
+                    <div class="card-actions">
+                        <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
+                        <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
+                        <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
+                        <button class="btn-danger" onclick="actionCard('${item.ID}', 'delete')">🗑️刪除</button>
+                        <button class="btn-lightblue" onclick="actionCard('${item.ID}', 'lock')">${item.Locked === 'True' ? '🔓解鎖' : '🔒鎖定'}</button>
+                    </div>
+                `;
+            }
+            resDiv.appendChild(card);
+            if (!isFresh) renderBarcode(`bc_${idx}`, item.ID, item.Type);
+        });
+    }
 
-            html += `</div>`;
+    function showFreshBarcode(id, type, dayOffset, deliveryCode, svgId) {
+        // ID (pad/trim to 8) + Julian (3) + Delivery (1) = 12 digits
+        let baseId = id.padEnd(8, '0').substring(0, 8);
+        let julian = getJulian(dayOffset);
+        let code12 = baseId + julian + deliveryCode;
+        renderBarcode(svgId, code12, 'EAN13'); // JsBarcode will auto-calculate check digit for 12 digits
+    }
+
+    function actionCard(id, action) {
+        let items = db.filter(i => i.ID === id);
+        if(!items.length) return;
+        let mainItem = items[0]; // Simplified for now, applied to first match
+
+        if (action === 'reclassify') {
+            mainItem.C1 = '未分類';
+        } else if (action === 'qa') {
+        // 改用隱藏的 date input 觸發原生月曆
+        const datePicker = document.getElementById('hiddenDatePicker');
+        
+        // 監聽日期變更事件
+        datePicker.onchange = function() {
+            if (this.value) {
+                // 將 yyyy-mm-dd 轉換為 yyyymmdd
+                const formattedDate = this.value.replace(/-/g, '');
+                mainItem.Expiry = cleanArrayStr(`${mainItem.Expiry}/${formattedDate}`, true);
+                saveData();
+                renderSearch();
+                this.value = ''; // 清空以利下次選取
+            }
+        };
+        
+        // 觸發點擊，彈出手機/電腦系統內建的月曆
+        datePicker.showPicker(); 
+        }  else if (action === 'order') {
+            mainItem.Event = cleanArrayStr(`${mainItem.Event}/待訂貨`, false);
+        } else if (action === 'delete') {
+            if(confirm('確認刪除？')) db = db.filter(i => i.ID !== id);
+        } else if (action === 'lock') {
+            mainItem.Locked = mainItem.Locked === 'True' ? 'False' : 'True';
+        }
+        saveData(); renderSearch();
+    }
+
+    // --- 3. 勘誤頁面 ---
+    function renderError() {
+        const idGroups = {};
+        db.forEach(item => {
+            if(!idGroups[item.ID]) idGroups[item.ID] = [];
+            idGroups[item.ID].push(item);
         });
         
-        document.getElementById('errataResults').innerHTML = html;
-        if (html === '') document.getElementById('errataStats').innerText += ' (目前無需要勘誤的項目)';
-    }
-
-    function resolveErrata(id, field, value) {
-        let group = products.filter(p => p.ID === id);
-        group.forEach(p => p[field] = value);
-        saveData();
-        renderErrata(); // 重新渲染，若三者皆統一會觸發自動合併
-    }
-
-    // --- 4. 鮮食功能 ---
-    function execFreshSearch() {
-        const k = document.getElementById('freshSearch').value.toLowerCase();
-        const resDiv = document.getElementById('freshResults');
-        if (k.length < 1) { resDiv.innerHTML = ''; return; }
-
-        let filtered = products.filter(p => (p.Type === 'I35' || p.Type === 'I24') && p.Name.toLowerCase().includes(k));
+        const conflicts = [];
+        let totalDupItems = 0; let totalDupBatches = 0;
         
-        let html = '';
-        filtered.forEach(p => {
-            html += `
-            <div class="card">
-                <div class="card-title">${p.Name}</div>
-                <div class="card-sub">ID: ${p.ID} | Type: ${p.Type}</div>
-                <div class="card-actions" style="margin-top:10px; justify-content:flex-start;">
-                    <button class="btn btn-outline" onclick="showFreshBarcode(this, '${p.ID}', '${p.Type}', 0, ${p.Type==='I35'?3:1})">今日(一配)</button>
-                    ${p.Type==='I35' ? `<button class="btn btn-outline" onclick="showFreshBarcode(this, '${p.ID}', '${p.Type}', 0, 5)">今日(二配)</button>` : ''}
-                    <button class="btn btn-outline" onclick="showFreshBarcode(this, '${p.ID}', '${p.Type}', 1, ${p.Type==='I35'?3:1})">明日(一配)</button>
-                    ${p.Type==='I35' ? `<button class="btn btn-outline" onclick="showFreshBarcode(this, '${p.ID}', '${p.Type}', 1, 5)">明日(二配)</button>` : ''}
-                </div>
-                <div class="fresh-barcode-area" style="margin-top:10px;"></div>
-            </div>`;
+        for (const [id, group] of Object.entries(idGroups)) {
+            if (group.length > 1) {
+                totalDupItems += group.length; totalDupBatches++;
+                const types = [...new Set(group.map(i=>i.Type))];
+                const names = [...new Set(group.map(i=>i.Name))];
+                const c1s = [...new Set(group.map(i=>i.C1))];
+                if(types.length > 1 || names.length > 1 || c1s.length > 1 || group.some(i=>i.Locked!=='True')) {
+                    conflicts.push({id, group, types, names, c1s});
+                }
+            }
+        }
+        
+        document.getElementById('errorStats').innerText = `總重複筆數: ${totalDupItems} | 總批數: ${totalDupBatches}`;
+        const res = document.getElementById('errorResult');
+        res.innerHTML = '';
+        
+        conflicts.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            let html = `<div class="card-title">ID: ${c.id}</div>`;
+            
+            ['types', 'names', 'c1s'].forEach((cat, idx) => {
+                let colorClass = idx === 0 ? 'btn-pink' : (idx === 1 ? 'btn-yellow' : 'btn-lightblue');
+                html += `<div class="card-actions">`;
+                c[cat].forEach(val => {
+                    html += `<button class="${colorClass}" onclick="resolveConflict('${c.id}', '${cat}', '${val}')">${val}</button>`;
+                });
+                html += `</div>`;
+            });
+            
+            // Check if ready to merge (all cats have 1 unique value)
+            if (c.types.length === 1 && c.names.length === 1 && c.c1s.length === 1) {
+                html += `<div class="card-actions" style="margin-top:15px;"><button class="btn-primary" style="width:100%" onclick="mergeConflict('${c.id}')">🔒鎖定合併</button></div>`;
+            }
+            card.innerHTML = html;
+            res.appendChild(card);
         });
-        resDiv.innerHTML = html;
     }
 
-    function showFreshBarcode(btn, id, type, offsetDays, deliveryCode) {
-        let julian = getJulianDate(offsetDays);
-        let base12 = id.padEnd(8, '0').substring(0,8) + julian + deliveryCode;
-        let checksum = calculateEAN13Checksum(base12);
-        let ean13 = base12 + checksum;
+    function resolveConflict(id, category, value) {
+        db.filter(i => i.ID === id).forEach(item => {
+            if(category === 'types') item.Type = value;
+            if(category === 'names') item.Name = value;
+            if(category === 'c1s') item.C1 = value;
+        });
+        saveData(); renderError();
+    }
+
+    function mergeConflict(id) {
+        let group = db.filter(i => i.ID === id);
+        let master = group[0];
+        let allExpiry = group.map(i => i.Expiry).join('/');
+        let allEvent = group.map(i => i.Event).join('/');
         
-        let area = btn.closest('.card').querySelector('.fresh-barcode-area');
-        area.innerHTML = generateBarcodeHTML('fresh_'+id, 'EAN13', ean13, 2, 60);
+        master.Expiry = cleanArrayStr(allExpiry, true);
+        master.Event = cleanArrayStr(allEvent, false, master.Name, master.ID);
+        master.Locked = 'True';
+        
+        // Remove others
+        db = db.filter(i => i.ID !== id);
+        db.push(master);
+        saveData(); renderError();
     }
 
-    // --- 5. 品保功能 ---
+    // --- 4. 品保頁面 ---
     function renderQA() {
         const showBc = document.getElementById('qaBarcodeToggle').checked;
-        const resDiv = document.getElementById('qaResults');
+        const resDiv = document.getElementById('qaResult');
+        resDiv.innerHTML = '';
         
-        // 扁平化資料
-        let flat = [];
-        products.forEach(p => {
-            if (!p.Expiry) return;
-            p.Expiry.split('/').forEach(d => {
-                if (d) flat.push({ date: d, orig: p });
-            });
-        });
+        const now = new Date();
+        const yyyymm = now.getFullYear() * 100 + (now.getMonth() + 1);
+        const yyyymm1 = now.getFullYear() * 100 + (now.getMonth() + 2); // Simplistic month math
+        const yyyymm2 = now.getFullYear() * 100 + (now.getMonth() + 3);
 
-        // 取得年月比較基準
-        let now = new Date();
-        let currentYearMonth = parseInt(`${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}`);
-        let todayNum = parseInt(`${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}`);
-
-        // 分組
-        let groups = {};
-        flat.forEach(item => {
-            let dStr = item.date; // YYYYMMDD
-            if (dStr.length !== 8) return;
-            let itemYM = parseInt(dStr.substring(0,6));
-            
-            // 僅顯示當月及次兩月
-            if (itemYM >= currentYearMonth && itemYM <= currentYearMonth + 2) {
-                if (!groups[dStr]) groups[dStr] = [];
-                groups[dStr].push(item.orig);
-            }
-        });
-
-        // 排序日期
-        let sortedDates = Object.keys(groups).sort();
-        
-        let html = '';
-        sortedDates.forEach(date => {
-            let itemYM = parseInt(date.substring(0,6));
-            let dNum = parseInt(date);
-            
-            let cardClass = '';
-            if (itemYM === currentYearMonth && dNum <= todayNum) cardClass = 'qa-red';
-            else if (itemYM > currentYearMonth) cardClass = 'qa-yellow';
-
-            html += `<div class="card ${cardClass}">
-                <div class="card-header">
-                    <div class="card-title">到期日: ${date.substring(0,4)}/${date.substring(4,6)}/${date.substring(6,8)}</div>
-                    <button class="btn btn-danger" onclick="removeQAGroup('${date}')">整批下架</button>
-                </div>`;
-            
-            groups[date].forEach((p, idx) => {
-                html += `<div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold;">${p.Name}</span>
-                        <button class="btn btn-sm btn-outline" style="color:red; border-color:red;" onclick="removeQAItem('${p.ID}', '${date}')">下架</button>
-                    </div>
-                    ${showBc ? generateBarcodeHTML(`qa_${date}_${idx}`, p.Type, p.ID) : ''}
-                </div>`;
-            });
-            html += `</div>`;
-        });
-        resDiv.innerHTML = html || '無品保資料';
-    }
-
-    function removeQAItem(id, dateStr) {
-        products.filter(p => p.ID === id).forEach(p => {
-            p.Expiry = p.Expiry.split('/').filter(d => d !== dateStr).join('/');
-        });
-        saveData(); renderQA();
-    }
-
-    function removeQAGroup(dateStr) {
-        products.forEach(p => {
-            if (p.Expiry) p.Expiry = p.Expiry.split('/').filter(d => d !== dateStr).join('/');
-        });
-        saveData(); renderQA();
-    }
-
-    // --- 6. 補貨功能 ---
-    function renderRestock() {
-        let html = '';
-        restockList.forEach((r, idx) => {
-            html += `<div class="card">
-                <div class="card-title">${r.Name}</div>
-                ${generateBarcodeHTML('restock_'+idx, r.Type, r.ID)}
-            </div>`;
-        });
-        document.getElementById('restockResults').innerHTML = html || '無補貨清單';
-    }
-    function clearRestock() {
-        restockList = [];
-        renderRestock();
-    }
-
-    // --- 7. 分類功能 ---
-    function renderCategory() {
-        let c1s = uniqueArray(products.map(p => p.C1)).filter(c => c !== '未分類');
-        let html = '<option value="">選擇分類</option>';
-        c1s.forEach(c => html += `<option value="${c}">${c}</option>`);
-        html += `<option value="__NEW__">+ 新增分類</option>`;
-        document.getElementById('catSelect').innerHTML = html;
-        document.getElementById('catNewInput').style.display = 'none';
-
-        let uncat = products.filter(p => p.C1 === '未分類').slice(0, 50);
-        let resHtml = '';
-        uncat.forEach(p => {
-            resHtml += `<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#fff; padding:8px; border-radius:4px;">
-                <input type="checkbox" class="cat-check" value="${p.ID}" style="width:auto; margin:0;">
-                <span style="flex:1;">${p.Name}</span>
-            </div>`;
-        });
-        document.getElementById('catResults').innerHTML = resHtml || '無未分類資料';
-    }
-
-    function handleCatSelectChange() {
-        if (document.getElementById('catSelect').value === '__NEW__') {
-            document.getElementById('catNewInput').style.display = 'block';
-        } else {
-            document.getElementById('catNewInput').style.display = 'none';
-        }
-    }
-
-    function applyCategory() {
-        let selValue = document.getElementById('catSelect').value;
-        if (selValue === '__NEW__') {
-            selValue = document.getElementById('catNewInput').value.trim();
-        }
-        if (!selValue) { alert('請選擇或輸入分類'); return; }
-
-        let checks = document.querySelectorAll('.cat-check:checked');
-        if (checks.length === 0) return;
-
-        let ids = Array.from(checks).map(c => c.value);
-        products.forEach(p => {
-            if (ids.includes(p.ID)) p.C1 = selValue;
-        });
-        saveData(); renderCategory();
-    }
-
-    // --- 8. 活動功能 ---
-    function renderActivity() {
-        let events = uniqueArray(products.flatMap(p => (p.Event||'').split('/')));
-        let tagsHtml = '';
-        events.forEach(e => {
-            tagsHtml += `<button class="btn btn-warning" onclick="removeActivity('${e}')">${e} ✖</button>`;
-        });
-        document.getElementById('activityTags').innerHTML = tagsHtml;
-        document.getElementById('actPreview').innerHTML = '';
-        document.getElementById('actSearchArea').value = '';
-    }
-
-    function removeActivity(eventStr) {
-        if (confirm(`確定從所有商品移除活動 [${eventStr}]？`)) {
-            products.forEach(p => {
-                if (p.Event) p.Event = p.Event.split('/').filter(e => e !== eventStr).join('/');
-            });
-            saveData(); renderActivity();
-        }
-    }
-
-    function execActSearch() {
-        let lines = document.getElementById('actSearchArea').value.split('\n').filter(l => l.trim());
-        let html = '';
-        lines.forEach(line => {
-            let matches = products.filter(p => p.Name.toLowerCase().includes(line.toLowerCase()));
-            if (matches.length === 0) {
-                html += `<div style="color:red;">${line} : 未搜尋到</div>`;
-            } else {
-                matches.forEach((m, idx) => {
-                    let suffix = matches.length > 1 ? ` <span style="color:#888;">(${idx+1}/${matches.length})</span>` : '';
-                    html += `<div><input type="checkbox" class="act-check" value="${m.ID}" checked style="width:auto;margin:0 5px 0 0;">${m.Name}${suffix}</div>`;
+        const expMap = {}; // { '20260315': [items] }
+        db.forEach(item => {
+            if(item.Expiry) {
+                item.Expiry.split('/').forEach(d => {
+                    if(d) {
+                        if(!expMap[d]) expMap[d] = [];
+                        expMap[d].push(item);
+                    }
                 });
             }
         });
-        document.getElementById('actPreview').innerHTML = html;
-    }
 
-    function applyActivity() {
-        let newEvent = document.getElementById('actInputStr').value.trim();
-        if (!newEvent) { alert('請輸入活動字串'); return; }
-        
-        let checks = document.querySelectorAll('.act-check:checked');
-        if (checks.length === 0) { alert('無選取商品'); return; }
+        Object.keys(expMap).sort().forEach(date => {
+            const ym = parseInt(date.substring(0, 6));
+            if (ym > yyyymm2) return; // Only show up to next 2 months
+            
+            let bgClass = '';
+            if (ym <= yyyymm) bgClass = 'bg-danger-light';
+            else if (ym <= yyyymm2) bgClass = 'bg-warning-light';
 
-        let ids = Array.from(checks).map(c => c.value);
-        products.forEach(p => {
-            if (ids.includes(p.ID)) {
-                p.Event = mergeStrings(p.Event, newEvent);
+            const groupDiv = document.createElement('div');
+            groupDiv.className = `card ${bgClass}`;
+            let html = `<div class="card-title flex-row">
+                            <span>到期日: ${date}</span>
+                            <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
+                        </div>`;
+            
+            expMap[date].forEach((item, idx) => {
+                let svgId = `qa_${date}_${idx}`;
+                html += `
+                    <div style="border-top:1px dashed #ccc; padding-top:5px; margin-top:5px;">
+                        <div class="flex-row">
+                            <span style="flex:1">${item.Name}</span>
+                            <button class="btn-warning no-print" style="flex:0;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                        </div>
+                        ${showBc ? `<div style="text-align:center;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                    </div>
+                `;
+            });
+            groupDiv.innerHTML = html;
+            resDiv.appendChild(groupDiv);
+            
+            if(showBc) {
+                expMap[date].forEach((item, idx) => {
+                    renderBarcode(`qa_${date}_${idx}`, item.ID, item.Type);
+                });
             }
         });
-        saveData();
-        renderActivity();
-        document.getElementById('actInputStr').value = '';
-        alert('活動加入完成');
     }
-</script>
 
+    function removeQA(date, itemId = null) {
+        db.forEach(item => {
+            if (!itemId || item.ID === itemId) {
+                if (item.Expiry.includes(date)) {
+                    item.Expiry = item.Expiry.split('/').filter(d => d !== date).join('/');
+                }
+            }
+        });
+        saveData(); renderQA();
+    }
+
+    // --- 5. 分類頁面 ---
+    function renderClassify() {
+        const c1s = [...new Set(db.map(i=>i.C1).filter(Boolean))];
+        const sel = document.getElementById('classifySelect');
+        sel.innerHTML = `<option value="">選擇分類</option><option value="NEW_CATEGORY">-- 新增分類 --</option>`;
+        c1s.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+        document.getElementById('newCategoryInput').style.display = 'none';
+        
+        const res = document.getElementById('classifyResult');
+        let unclass = db.filter(i => i.C1 === '未分類').slice(0, 50);
+        let html = '';
+        unclass.forEach(item => {
+            html += `<div class="card flex-row">
+                        <input type="checkbox" class="class-chk" value="${item.ID}" style="flex:0; width:20px; height:20px;">
+                        <span style="flex:1">${item.Name}</span>
+                     </div>`;
+        });
+        res.innerHTML = html;
+    }
+
+    function handleClassifySelect() {
+        if(document.getElementById('classifySelect').value === 'NEW_CATEGORY') {
+            document.getElementById('newCategoryInput').style.display = 'block';
+        } else {
+            document.getElementById('newCategoryInput').style.display = 'none';
+        }
+    }
+
+    function applyClassification() {
+        let targetC1 = document.getElementById('classifySelect').value;
+        if (targetC1 === 'NEW_CATEGORY') targetC1 = document.getElementById('newCategoryInput').value.trim();
+        if (!targetC1) return alert("請輸入或選擇分類");
+
+        const checkedIds = Array.from(document.querySelectorAll('.class-chk:checked')).map(cb => cb.value);
+        if(!checkedIds.length) return alert("請勾選項目");
+
+        db.forEach(item => {
+            if(checkedIds.includes(item.ID)) item.C1 = targetC1;
+        });
+        saveData(); renderClassify();
+    }
+
+    // --- 6. 活動頁面 ---
+    function renderActivity() {
+        const events = new Set();
+        db.forEach(i => i.Event.split('/').forEach(e => { if(e) events.add(e); }));
+        const tagsDiv = document.getElementById('activityTags');
+        tagsDiv.innerHTML = '';
+        events.forEach(e => {
+            const btn = document.createElement('button');
+            btn.innerText = `✖ ${e}`;
+            btn.onclick = () => {
+                if(confirm(`清除所有「${e}」活動標籤？`)) {
+                    db.forEach(item => {
+                        item.Event = item.Event.split('/').filter(ev => ev !== e).join('/');
+                    });
+                    saveData(); renderActivity();
+                }
+            };
+            tagsDiv.appendChild(btn);
+        });
+    }
+
+    function searchActivity() {
+        const text = document.getElementById('activitySearch').value;
+        const keywords = text.split('\n').filter(k => k.trim());
+        const res = document.getElementById('activitySearchResult');
+        res.innerHTML = '';
+        
+        keywords.forEach(kw => {
+            let matches = db.filter(i => i.Name.toLowerCase().includes(kw.trim().toLowerCase()));
+            let p = document.createElement('div');
+            if(matches.length === 0) {
+                p.innerText = `${kw}：未搜尋到`;
+                p.style.color = 'red';
+            } else {
+                p.innerText = `${kw}：找到 ${matches[0].Name} ` + (matches.length>1 ? `(${matches.length}筆重複)` : '');
+            }
+            res.appendChild(p);
+        });
+    }
+
+    function addActivity() {
+        const evName = document.getElementById('activityInput').value.trim();
+        if(!evName) return alert('請輸入活動名稱');
+        const text = document.getElementById('activitySearch').value;
+        const keywords = text.split('\n').filter(k => k.trim());
+        
+        let added = 0;
+        keywords.forEach(kw => {
+            db.filter(i => i.Name.toLowerCase().includes(kw.trim().toLowerCase())).forEach(item => {
+                item.Event = cleanArrayStr(`${item.Event}/${evName}`, false, item.Name, item.ID);
+                added++;
+            });
+        });
+        saveData();
+        alert(`已成功加入 ${added} 筆活動標籤`);
+        renderActivity();
+    }
+
+</script>
 </body>
 </html>
