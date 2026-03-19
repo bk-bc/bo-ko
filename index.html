@@ -25,10 +25,12 @@
         .nav-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
         
         /* Layout & Cards */
-        .container { padding: 0 10px; }
+        .container { padding: 0 10px;max-width: 100%;  margin: 0 auto; }
         .section { display: none; }
         .section.active { display: block; }
-        .card { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);    display: flex;
+    flex-direction: column;
+ }
         .card-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; word-break: break-all; }
         .card-sub { font-size: 0.9em; color: #555; margin-bottom: 8px; }
         .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
@@ -66,7 +68,7 @@
     /* 自動填滿寬度，每個卡片最小 270px，最大平分剩餘空間 */
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 15px; /* 卡片之間的間距 */
-    align-items: start;
+    align-items: stretch;
 }
 
 /* 針對手機版小螢幕的微調：如果寬度小於 600px，強制單排 */
