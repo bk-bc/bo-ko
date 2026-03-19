@@ -114,11 +114,13 @@
     </div>
 
     <div id="search" class="section">
-        <div class="flex-row no-print">
-            <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
-            <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
-            <button class="btn-success" onclick="clearOrder()">已訂貨</button>
-        </div>
+       <div class="flex-row no-print">
+    <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
+    <label><input type="checkbox" id="hideQuickActions" onchange="renderSearch()"> 關閉快捷</label> 
+    <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
+    <button class="btn-success" onclick="clearOrder()">已訂貨</button>
+</div>
+
         <div id="searchFilters" class="no-print">
             <div class="flex-row">
                 <select id="searchC1" onchange="renderSearch()"><option value="">C1: 全部搜尋</option></select>
@@ -368,6 +370,47 @@
         const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
         const resDiv = document.getElementById('searchResult');
         const searchFilters = document.getElementById('searchFilters');
+    const hideActions = document.getElementById('hideQuickActions').checked;
+    const actionStyle = hideActions ? 'display: none;' : 'display: flex;';
+    filtered.slice(0, 50).forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        if (isFresh) {
+            // 鮮食模式：套用隱藏邏輯
+            card.innerHTML = `
+                <div class="card-title">${item.Name} (${item.Type})</div>
+                <div class="card-actions" style="${actionStyle}">
+                    <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${idx}')">今日到期</button>
+                    <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${idx}')">明日到期</button>
+                    ${item.Type === 'I35' ? `
+                        <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${idx}')">一配</button>
+                        <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${idx}')">二配</button>
+                    ` : ''}
+                </div>
+                <div style="text-align:center; margin-top:10px;"><svg id="bc_${idx}" class="barcode"></svg></div>
+            `;
+        } else {
+            // 一般模式：同樣套用 actionStyle 隱藏原本的五個按鈕
+            card.innerHTML = `
+                <div class="card-title">${item.Name}</div>
+                <div class="card-sub">${item.C1} | ${item.Event}</div>
+                <div style="text-align:center;"><svg id="bc_${idx}" class="barcode"></svg></div>
+                <div class="card-actions" style="${actionStyle}">
+                    <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
+                    <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
+                    <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
+                    <button class="btn-danger" onclick="actionCard('${item.ID}', 'delete')">🗑️刪除</button>
+                    <button class="btn-lightblue" onclick="actionCard('${item.ID}', 'lock')">${item.Locked === 'True' ? '🔓解鎖' : '🔒鎖定'}</button>
+                </div>
+            `;
+        }
+        resDiv.appendChild(card);
+        // 注意：鮮食模式預設不自動渲染條碼，是點了按鈕才出現；一般模式則是一開始就渲染
+        if (!isFresh) renderBarcode(`bc_${idx}`, item.ID, item.Type);
+    });
+}
+
 
         resDiv.innerHTML = '';
         
