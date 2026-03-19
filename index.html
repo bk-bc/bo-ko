@@ -378,7 +378,6 @@
     const searchFilters = document.getElementById('searchFilters');
 
     // 1. 先清空舊結果
-    resDiv.innerHTML = '';
     const actionStyle = hideActions ? 'display: none;' : 'display: flex;';
 
     // 2. 處理 UI 顯示/隱藏
@@ -414,7 +413,7 @@
     });
 
     document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 50 ? '50+' : filtered.length}`;
-
+    resDiv.innerHTML = '';
     // 4. 開始渲染卡片
     filtered.slice(0, 50).forEach((item, idx) => {
         const card = document.createElement('div');
