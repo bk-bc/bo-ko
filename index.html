@@ -51,18 +51,45 @@
         
         svg.barcode { width: 100%; max-height: 80px; }
 
-        /* QA Print Styles */
-        @media print {
-            header, .no-print, nav, .card-actions { display: none !important; }
-            body { background: white; padding: 0; }
-            .print-container { column-count: 2; column-gap: 20px; }
-            .card { break-inside: avoid; border: 1px solid #000; box-shadow: none; margin-bottom: 10px; }
-            .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
-            .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
-        }
-        .bg-danger-light { background-color: #ffe6e6; }
-        .bg-warning-light { background-color: #fff3cd; }
-       /* 搜尋結果的多排佈局 *//* 確保搜尋結果區域一定是 Grid */
+@media print {
+    /* 通用隱藏部分：不管在哪個分頁，導航和按鈕都不印 */
+    header, .no-print, .nav-buttons, .card-actions, button, input {
+        display: none !important;
+    }
+
+    body { background: white; padding: 0; }
+
+    /* --- 模式 A：搜尋頁面的「4列標籤」格式 --- */
+    #search.active #searchResult {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important; /* 強制四列 */
+        gap: 8px !important;
+    }
+    #search.active .card {
+        border: 1px solid #ddd !important;
+        padding: 5px !important;
+        text-align: center;
+        break-inside: avoid;
+    }
+    #search.active .card-sub { display: none !important; } /* 隱藏分類資訊 */
+    #search.active .card svg.barcode { height: 50px !important; }
+
+    /* --- 模式 B：品保頁面的「2列清單」格式 --- */
+    #qa.active .print-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important; /* 品保維持兩列，方便閱讀 */
+        gap: 20px !important;
+    }
+    #qa.active .card {
+        border: 1px solid #000 !important;
+        margin-bottom: 10px;
+        break-inside: avoid;
+    }
+    /* 保留品保的顏色標示 */
+    #qa.active .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
+    #qa.active .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
+}
+
 
 /* --- 搜尋結果的多排佈局修正版 --- */
 #searchResult {
@@ -143,6 +170,7 @@
     <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
     <label><input type="checkbox" id="shortcutToggle" checked onchange="renderSearch()"> 快捷鍵</label>
     <button class="btn-success" onclick="clearOrder()">已訂貨</button>
+    <button class="btn-primary" onclick="window.print()">🖨️ 列印標籤</button>
 </div>
         <div id="searchFilters" class="no-print">
             <div class="flex-row">
