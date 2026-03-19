@@ -63,35 +63,45 @@
         .bg-danger-light { background-color: #ffe6e6; }
         .bg-warning-light { background-color: #fff3cd; ｝
        /* 搜尋結果的多排佈局 *//* 確保搜尋結果區域一定是 Grid */
+
+/* --- 搜尋結果的多排佈局修正版 --- */
 #searchResult {
-    display: grid !important; 
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
-    gap: 15px;
-    padding: 10px 0;
+    display: grid !important;
+    /* 核心修改：將最小寬度降到 160px，這能確保手機直向 2 排，橫向 3-4 排 */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 12px;
+    padding: 10px;
     width: 100%;
-}
-
-/* 確保卡片不會溢出 */
-.card {
-    width: 100%;
-    min-width: 0; /* 防止 Flex 項目溢出 */
     box-sizing: border-box;
+    align-items: stretch;
 }
 
-
-/* 針對手機版小螢幕的微調：如果寬度小於 600px，強制單排 */
-@media (max-width: 450px) {
-    #searchResult {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
+/* 確保卡片在任何寬度下都不會溢出 */
+.card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 0 !important; /* Grid 模式下靠 gap 控制，移除 margin 防止跑版 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0; /* 關鍵：防止內容（如長字串）撐破 Grid */
 }
 
-
+/* 條碼自動縮放 */
 .card svg.barcode {
-    width: 100%;
-    height: auto;
-    max-height: 100px;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 70px;
+}
+
+/* 移除原本那個會鎖死單排的 540px Media Query，改用這個更靈活的 */
+@media (max-width: 350px) {
+    #searchResult {
+        /* 只有在寬度小於 350px (極小螢幕) 時才變回單排 */
+        grid-template-columns: 1fr !important;
+    }
 }
 
         
