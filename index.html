@@ -140,10 +140,11 @@
 
     <div id="search" class="section">
         <div class="flex-row no-print">
-            <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
-            <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
-            <button class="btn-success" onclick="clearOrder()">已訂貨</button>
-        </div>
+    <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
+    <label><input type="checkbox" id="shortcutToggle" checked onchange="renderSearch()"> 快捷鍵</label>
+    <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
+    <button class="btn-success" onclick="clearOrder()">已訂貨</button>
+</div>
         <div id="searchFilters" class="no-print">
             <div class="flex-row">
                 <select id="searchC1" onchange="renderSearch()"><option value="">C1: 全部搜尋</option></select>
@@ -393,7 +394,8 @@
         const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
         const resDiv = document.getElementById('searchResult');
         const searchFilters = document.getElementById('searchFilters');
-
+    // 插入這行：取得快捷鍵的開關狀態
+    const showShortcuts = document.getElementById('shortcutToggle').checked;
         resDiv.innerHTML = '';
         
     if (isFresh) {
@@ -455,12 +457,12 @@
                     </div>
                     <div style="text-align:center; margin-top:10px;"><svg id="bc_${idx}" class="barcode"></svg></div>
                 `;
-            } else {
+            } else {const hideNormalShortcuts = !isFresh && !showShortcuts;
                 card.innerHTML = `
                     <div class="card-title">${item.Name}</div>
                     <div class="card-sub">${item.C1} | ${item.Event}</div>
                     <div style="text-align:center;"><svg id="bc_${idx}" class="barcode"></svg></div>
-                    <div class="card-actions">
+                        <div class="card-actions" style="display: ${hideNormalShortcuts ? 'none' : 'flex'};">
                         <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
                         <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
                         <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
