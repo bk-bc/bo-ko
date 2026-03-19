@@ -59,7 +59,43 @@
             .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
         }
         .bg-danger-light { background-color: #ffe6e6; }
-        .bg-warning-light { background-color: #fff3cd; }
+        .bg-warning-light { background-color: #fff3cd; ｝
+       /* 搜尋結果的多排佈局 */
+#searchResult {
+    display: grid;
+    /* 自動填滿寬度，每個卡片最小 270px，最大平分剩餘空間 */
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 15px; /* 卡片之間的間距 */
+    align-items: start;
+}
+
+/* 針對手機版小螢幕的微調：如果寬度小於 600px，強制單排 */
+@media (max-width: 540px) {
+    #searchResult {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
+/* 確保卡片內的條碼與內容不會超出寬度 */
+.card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 0; /* Grid 佈局下由 gap 控制間距 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card svg.barcode {
+    width: 100%;
+    height: auto;
+    max-height: 100px;
+}
+
+        
     </style>
 </head>
 <body>
