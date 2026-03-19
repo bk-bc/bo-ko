@@ -171,6 +171,11 @@
 <input type="date" id="hiddenDatePicker" style="position:fixed; top:-100px; left:-100px; opacity:0;">
 
 <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+    alert("出錯了！\n訊息: " + message + "\n行號: " + lineno);
+    return true;
+};
+
     // --- 核心資料狀態 ---
     let db = []; 
     let stats = { imported: 0, merged: 0 };
@@ -554,8 +559,7 @@
                 saveData();
                 renderSearch();
                 this.value = ''; // 清空以利下次選取
-            }
-        };
+           ;
         
         // 觸發點擊，彈出手機/電腦系統內建的月曆
         datePicker.showPicker(); 
