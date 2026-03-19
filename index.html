@@ -6,81 +6,99 @@
     <title>智慧零售管理系統 v5.0</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <style>
-    :root {
-        --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107;
-        --pink: hotpink; --yellow: gold; --lightblue: lightblue;
-        --bg-color: #f4f6f9; --card-bg: #ffffff;
-    }
-    * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { margin: 0; padding: 0; background-color: var(--bg-color); padding-bottom: 60px; }
-    
-    header {
-        position: sticky; top: 0; z-index: 1000; background: #fff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px;
-    }
-    .header-stats { font-size: 0.85em; color: #666; margin-bottom: 5px; }
-    .nav-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
-    .nav-buttons button { flex: 1 1 auto; padding: 8px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; }
-    .nav-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
-    
-    .container { padding: 0 10px; max-width: 100%; margin: 0 auto; }
-    .section { display: none; }
-    .section.active { display: block; }
-
-    /* --- 核心修正：搜尋結果網格佈局 --- */
-    #searchResult {
-        display: grid !important;
-        /* 平板以上自動多排 (最小 280px) */
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 12px;
-        padding: 10px 0;
-        align-items: stretch;
-    }
-
-    .card { 
-        background: var(--card-bg); 
-        border-radius: 8px; 
-        padding: 12px; 
-        /* 移除 margin-bottom，改用 grid 的 gap */
-        margin-bottom: 0 !important; 
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1); 
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        border: 1px solid #eee;
-    }
-
-    /* 手機版強制單排 (寬度小於 540px) */
-    @media (max-width: 540px) {
-        #searchResult {
-            grid-template-columns: 1fr !important;
+        :root {
+            --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107;
+            --pink: hotpink; --yellow: gold; --lightblue: lightblue;
+            --bg-color: #f4f6f9; --card-bg: #ffffff;
         }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; background-color: var(--bg-color); padding-bottom: 60px; }
+        
+        /* Sticky Header */
+        header {
+            position: sticky; top: 0; z-index: 1000; background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px;
+        }
+        .header-stats { font-size: 0.85em; color: #666; margin-bottom: 5px; }
+        .nav-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+        .nav-buttons button { flex: 1 1 auto; padding: 8px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; }
+        .nav-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* Layout & Cards */
+        .container { padding: 0 10px;max-width: 100%;  margin: 0 auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);    display: flex;
+    flex-direction: column;
+ }
+        .card-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; word-break: break-all; }
+        .card-sub { font-size: 0.9em; color: #555; margin-bottom: 8px; }
+        .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        
+        /* Inputs & Buttons */
+        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: black; }
+        .btn-pink { background: var(--pink); color: white; }
+        .btn-yellow { background: var(--yellow); color: black; }
+        .btn-lightblue { background: var(--lightblue); color: black; }
+        
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;}
+        .flex-row > * { flex: 1; }
+        
+        svg.barcode { width: 100%; max-height: 80px; }
+
+        /* QA Print Styles */
+        @media print {
+            header, .no-print, nav, .card-actions { display: none !important; }
+            body { background: white; padding: 0; }
+            .print-container { column-count: 2; column-gap: 20px; }
+            .card { break-inside: avoid; border: 1px solid #000; box-shadow: none; margin-bottom: 10px; }
+            .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
+            .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
+        }
+        .bg-danger-light { background-color: #ffe6e6; }
+        .bg-warning-light { background-color: #fff3cd; ｝
+       /* 搜尋結果的多排佈局 */
+#searchResult {
+    display: grid;
+    /* 自動填滿寬度，每個卡片最小 270px，最大平分剩餘空間 */
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 15px; /* 卡片之間的間距 */
+    align-items: stretch;
+}
+
+/* 針對手機版小螢幕的微調：如果寬度小於 600px，強制單排 */
+@media (max-width: 540px) {
+    #searchResult {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
+}
 
-    .card-title { font-weight: bold; font-size: 1.05em; margin-bottom: 5px; word-break: break-all; color: #333; }
-    .card-sub { font-size: 0.85em; color: #666; margin-bottom: 8px; }
-    .card-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-    
-    input, select, textarea { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-    button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-warning { background: var(--warning); color: black; }
-    
-    .flex-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-    .flex-row > * { flex: 1; }
-    
-    svg.barcode { width: 100%; max-height: 90px; margin-top: 5px; }
+/* 確保卡片內的條碼與內容不會超出寬度 */
+.card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 0; /* Grid 佈局下由 gap 控制間距 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
-    /* 品保顏色修正 (修正了原本的全形大括號) */
-    .bg-danger-light { background-color: #ffe6e6 !important; }
-    .bg-warning-light { background-color: #fff3cd !important; }
+.card svg.barcode {
+    width: 100%;
+    height: auto;
+    max-height: 100px;
+}
 
-    @media print {
-        header, .no-print, .card-actions { display: none !important; }
-        .print-container { display: block !important; column-count: 2; }
-    }
-</style>
-
+        
+    </style>
 </head>
 <body>
 
@@ -114,13 +132,11 @@
     </div>
 
     <div id="search" class="section">
-       <div class="flex-row no-print">
-    <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
-    <label><input type="checkbox" id="hideQuickActions" onchange="renderSearch()"> 關閉快捷</label> 
-    <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
-    <button class="btn-success" onclick="clearOrder()">已訂貨</button>
-</div>
-
+        <div class="flex-row no-print">
+            <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
+            <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
+            <button class="btn-success" onclick="clearOrder()">已訂貨</button>
+        </div>
         <div id="searchFilters" class="no-print">
             <div class="flex-row">
                 <select id="searchC1" onchange="renderSearch()"><option value="">C1: 全部搜尋</option></select>
@@ -171,11 +187,6 @@
 <input type="date" id="hiddenDatePicker" style="position:fixed; top:-100px; left:-100px; opacity:0;">
 
 <script>
-    window.onerror = function(message, source, lineno, colno, error) {
-    alert("出錯了！\n訊息: " + message + "\n行號: " + lineno);
-    return true;
-};
-
     // --- 核心資料狀態 ---
     let db = []; 
     let stats = { imported: 0, merged: 0 };
@@ -367,90 +378,16 @@
         renderSearch();
     }
 
-  function renderSearch() {
-    const isFresh = document.getElementById('freshFoodCheck').checked;
-    const hideActions = document.getElementById('hideQuickActions').checked; // 確保有這一行
-    const c1 = document.getElementById('searchC1').value;
-    const ev = document.getElementById('searchEvent').value;
-    const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
-    const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
-    const resDiv = document.getElementById('searchResult');
-    const searchFilters = document.getElementById('searchFilters');
+    function renderSearch() {
+        const isFresh = document.getElementById('freshFoodCheck').checked;
+        const c1 = document.getElementById('searchC1').value;
+        const ev = document.getElementById('searchEvent').value;
+        const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
+        const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
+        const resDiv = document.getElementById('searchResult');
+        const searchFilters = document.getElementById('searchFilters');
 
-    // 1. 先清空舊結果
-    const actionStyle = hideActions ? 'display: none;' : 'display: flex;';
-
-    // 2. 處理 UI 顯示/隱藏
-    if (isFresh) {
-        document.getElementById('searchC1').style.display = 'none';
-        document.getElementById('searchEvent').style.display = 'none';
-        document.getElementById('searchKeyword2').style.display = 'none';
-        if (kw1.length < 1) {
-            document.getElementById('searchCount').innerText = '請輸入鮮食名稱進行搜尋...';
-            return;
-        }
-    } else {
-        document.getElementById('searchC1').style.display = 'block';
-        document.getElementById('searchEvent').style.display = 'block';
-        document.getElementById('searchKeyword2').style.display = 'block';
-        if (kw1.length < 1 && kw2.length < 1 && !c1 && !ev) {
-            document.getElementById('searchCount').innerText = '輸入關鍵字或選擇篩選項目...';
-            return;
-        }
-    }
-
-    // 3. 執行過濾邏輯 (你原本漏掉這段)
-    let filtered = db.filter(item => {
-        if (isFresh) {
-            if (item.Type !== 'I24' && item.Type !== 'I35') return false;
-            return item.Name.toLowerCase().includes(kw1);
-        } else {
-            if (c1 && item.C1 !== c1) return false;
-            if (ev && !item.Event.split('/').includes(ev)) return false;
-            return (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
-                   (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
-        }
-    });
-
-    document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 50 ? '50+' : filtered.length}`;
-    resDiv.innerHTML = '';
-    // 4. 開始渲染卡片
-    filtered.slice(0, 50).forEach((item, idx) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        
-        if (isFresh) {
-            card.innerHTML = `
-                <div class="card-title">${item.Name} (${item.Type})</div>
-                <div class="card-actions" style="${actionStyle}">
-                    <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${idx}')">今日到期</button>
-                    <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${idx}')">明日到期</button>
-                    ${item.Type === 'I35' ? `
-                        <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${idx}')">一配</button>
-                        <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${idx}')">二配</button>
-                    ` : ''}
-                </div>
-                <div style="text-align:center; margin-top:10px;"><svg id="bc_${idx}" class="barcode"></svg></div>
-            `;
-        } else {
-            card.innerHTML = `
-                <div class="card-title">${item.Name}</div>
-                <div class="card-sub">${item.C1} | ${item.Event}</div>
-                <div style="text-align:center;"><svg id="bc_${idx}" class="barcode"></svg></div>
-                <div class="card-actions" style="${actionStyle}">
-                    <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
-                    <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
-                    <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
-                    <button class="btn-danger" onclick="actionCard('${item.ID}', 'delete')">🗑️刪除</button>
-                    <button class="btn-lightblue" onclick="actionCard('${item.ID}', 'lock')">${item.Locked === 'True' ? '🔓解鎖' : '🔒鎖定'}</button>
-                </div>
-            `;
-        }
-        resDiv.appendChild(card);
-        if (!isFresh) renderBarcode(`bc_${idx}`, item.ID, item.Type);
-    });
-}
-
+        resDiv.innerHTML = '';
         
     if (isFresh) {
         // 鮮食模式：隱藏下拉選單與第二個框，只留第一個關鍵字輸入框
@@ -558,7 +495,8 @@
                 saveData();
                 renderSearch();
                 this.value = ''; // 清空以利下次選取
-           ;
+            }
+        };
         
         // 觸發點擊，彈出手機/電腦系統內建的月曆
         datePicker.showPicker(); 
