@@ -142,7 +142,6 @@
         <div class="flex-row no-print">
     <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
     <label><input type="checkbox" id="shortcutToggle" checked onchange="renderSearch()"> 快捷鍵</label>
-    <button class="btn-warning" onclick="quickFilter('待訂貨')">待訂貨</button>
     <button class="btn-success" onclick="clearOrder()">已訂貨</button>
 </div>
         <div id="searchFilters" class="no-print">
@@ -370,12 +369,6 @@
         document.getElementById('searchEvent').innerHTML = evHtml;
     }
 
-    function quickFilter(status) {
-        document.getElementById('freshFoodCheck').checked = false;
-        document.getElementById('searchEvent').value = status;
-        renderSearch();
-    }
-    
     function clearOrder() {
         db.forEach(item => {
             if(item.Event.includes('待訂貨')) {
