@@ -227,12 +227,28 @@
     let stats = { imported: 0, merged: 0 };
 
     // --- 初始化 ---
-    window.onload = () => {
-        const stored = localStorage.getItem('retailDB');
-        if (stored) db = JSON.parse(stored);
-        updateStatsUI();
-        renderAddType();
-    };
+window.onload = () => {
+    // 1. 從 LocalStorage 讀取資料 (這是所有動作的基礎)
+    const stored = localStorage.getItem('retailDB');
+    if (stored) {
+        db = JSON.parse(stored);
+    }
+
+    // 2. 更新統計 UI (你原本的統計邏輯)
+    if (typeof updateStatsUI === "function") updateStatsUI();
+
+    // 3. 產生新增頁面的類型選單 (你原本的邏輯)
+    if (typeof renderAddType === "function") renderAddType();
+
+    // 4. 【新增】根據讀到的 db 產生並排序 C1 下拉選單
+    // 這樣搜尋頁面的「細項分類」才會出現選項
+    if (typeof updateSearchFilters === "function") updateSearchFilters();
+
+    // 5. 【新增】畫出搜尋頁面的初始商品卡片
+    // 這樣一開網頁就能看到按 C1 排序好的商品
+    if (typeof renderSearch === "function") renderSearch();
+};
+
 
     function saveData() {
         localStorage.setItem('retailDB', JSON.stringify(db));
@@ -292,7 +308,30 @@
             console.error("Barcode error:", e);
         }
     }
+   function updateSearchFilters() {
+    const eventSelect = document.getElementById('searchEvent');
+    if (!eventSelect) return;
 
+    // 1. 抓取所有 C1，過濾掉空的，並去重
+    let c1List = [...new Set(db.map(item => item.C1).filter(Boolean))];
+
+    // 2. 中文排序 (讓相同的分類排在一起)
+    c1List.sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+
+    // 3. 記住當前選擇，清空後重新填入
+    const current = eventSelect.value;
+    eventSelect.innerHTML = '<option value="">所有細項 (C1)</option>';
+    
+    c1List.forEach(c1 => {
+        const opt = document.createElement('option');
+        opt.value = c1;
+        opt.textContent = c1;
+        eventSelect.appendChild(opt);
+    });
+
+    // 4. 恢復先前的選擇
+    if (c1List.includes(current)) eventSelect.value = current;
+}
     // --- CSV 邏輯 ---
     function importCSV() {
         const file = document.getElementById('csvFile').files[0];
@@ -344,7 +383,11 @@
             }
             stats.imported += newImportCount;
             stats.merged += newMergeCount;
+db = parsedData;         // 1. 更新資料庫變數
             saveData();
+updateSearchFilters();   // 3. 重新整理下拉選單的 C1 選項
+renderSearch();          // 4. 依照排序後的結果畫出卡片
+
             alert(`匯入完成！新增/掃描 ${newImportCount} 筆，合併 ${newMergeCount} 筆。`);
         };
         reader.readAsText(file);
@@ -418,6 +461,31 @@
     // 插入這行：取得快捷鍵的開關狀態
     const showShortcuts = document.getElementById('shortcutToggle').checked;
         resDiv.innerHTML = '';
+            const selectedC1 = document.getElementById('searchEvent').value;
+    const keyword = document.getElementById('searchInput').value.toLowerCase();
+
+    // 1. 過濾資料
+    let filtered = db.filter(item => {
+        const matchC1 = selectedC1 === "" || item.C1 === selectedC1;
+        const matchKeyword = item.Name.toLowerCase().includes(keyword) || item.ID.includes(keyword);
+        return matchC1 && matchKeyword;
+    });
+
+    // 2. 關鍵：讓畫面的卡片也按 C1 排序
+    filtered.sort((a, b) => {
+        const resC1 = a.C1.localeCompare(b.C1, 'zh-Hant');
+        if (resC1 !== 0) return resC1;
+        return a.Name.localeCompare(b.Name, 'zh-Hant'); // C1 相同則排名稱
+    });
+
+    // 3. 渲染 HTML (原本的 forEach 邏輯...)
+    const container = document.getElementById('searchResult');
+    container.innerHTML = '';
+    filtered.forEach((item, idx) => {
+        // ... 產生卡片的內容 ...
+    });
+
+
         
     if (isFresh) {
         // 鮮食模式：隱藏下拉選單與第二個框，只留第一個關鍵字輸入框
