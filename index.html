@@ -317,9 +317,19 @@ window.onload = () => {
             console.error("Barcode error:", e);
         }
     }
-    // --- 核心資料清洗與寫入邏輯 ---
+        // --- 核心資料清洗與寫入邏輯 ---
     function upsertItem(newItem) {
-        // 先確保新資料的 Expiry 和 Event 格式乾淨
+        // 【新增規則：強制造型校驗】
+        // 檢查 Name 是否至少有 6 位數，且開頭 6 位必須是數字
+        const namePrefix = newItem.Name.substring(0, 6);
+        const isSixDigits = /^\d{6}$/.test(namePrefix);
+
+        if (!isSixDigits) {
+            console.warn(`過濾無效資料：ID ${newItem.ID} 的 Name "${newItem.Name}" 不符合 6 位數字開頭規則。`);
+            return { imported: 0, merged: 0 }; // 直接回傳，不執行後續的 push 或 merge
+        }
+
+        // ... 以下維持原本的內容 (Expiry/Event 處理, existing.filter 等) ...
         newItem.Expiry = cleanArrayStr(newItem.Expiry, true);
         newItem.Event = cleanArrayStr(newItem.Event, false, newItem.Name, newItem.ID);
 
