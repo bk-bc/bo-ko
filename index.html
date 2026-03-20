@@ -301,60 +301,109 @@
             console.error("Barcode error:", e);
         }
     }
+    // --- 核心資料清洗與寫入邏輯 ---
+    function upsertItem(newItem) {
+        // 先確保新資料的 Expiry 和 Event 格式乾淨
+        newItem.Expiry = cleanArrayStr(newItem.Expiry, true);
+        newItem.Event = cleanArrayStr(newItem.Event, false, newItem.Name, newItem.ID);
 
-    // --- CSV 邏輯 ---
+        // 找出資料庫中所有同 ID 的項目
+        let existing = db.filter(i => i.ID === newItem.ID);
+
+        // 情況 1：完全沒有重複的 ID -> 直接新增
+        if (existing.length === 0) {
+            db.push(newItem);
+            return { imported: 1, merged: 0 };
+        }
+
+        // 情況 2：尋找是否有 Name, Type, C1「完全一致」的項目
+        let perfectMatch = existing.find(e => e.Name === newItem.Name && e.Type === newItem.Type && e.C1 === newItem.C1);
+
+        if (perfectMatch) {
+            // 【規則1 & 規則4前半】完全重複則直接合併 Event, Expiry
+            perfectMatch.Expiry = cleanArrayStr(`${perfectMatch.Expiry}/${newItem.Expiry}`, true);
+            perfectMatch.Event = cleanArrayStr(`${perfectMatch.Event}/${newItem.Event}`, false, perfectMatch.Name, perfectMatch.ID);
+            // 若新資料是鎖定的，確保合併後維持鎖定
+            if (newItem.Locked === 'True') perfectMatch.Locked = 'True';
+            return { imported: 0, merged: 1 };
+        }
+
+        // --- 執行到此，代表 ID 相同，但 Name, Type, C1 至少有一項不同 (產生衝突) ---
+        let lockedExisting = existing.filter(e => e.Locked === 'True');
+        let totalLocks = lockedExisting.length + (newItem.Locked === 'True' ? 1 : 0);
+
+        if (totalLocks === 0) {
+            // 【規則2】衝突且無 Locked -> 當作新衝突項目加入，待勘誤頁面處理
+            db.push(newItem);
+            return { imported: 1, merged: 0 };
+            
+        } else if (totalLocks === 1) {
+            // 【規則3】衝突且只有一個 Locked 為 True -> 無視其他資訊，強制合併至 locked 項目
+            if (newItem.Locked === 'True') {
+                // 新資料是鎖定的：吸收舊有所有同 ID 資料的 Expiry/Event，並取代它們
+                let allExp = newItem.Expiry;
+                let allEv = newItem.Event;
+                existing.forEach(e => {
+                    allExp = `${allExp}/${e.Expiry}`;
+                    allEv = `${allEv}/${e.Event}`;
+                });
+                newItem.Expiry = cleanArrayStr(allExp, true);
+                newItem.Event = cleanArrayStr(allEv, false, newItem.Name, newItem.ID);
+                
+                // 刪除舊有同 ID 項目，推入新鎖定項目
+                db = db.filter(i => i.ID !== newItem.ID);
+                db.push(newItem);
+                return { imported: 1, merged: existing.length };
+            } else {
+                // 舊資料中有鎖定的：將新資料的 Expiry/Event 合併進舊的，拋棄新資料的 Name/Type/C1
+                let masterItem = lockedExisting[0];
+                masterItem.Expiry = cleanArrayStr(`${masterItem.Expiry}/${newItem.Expiry}`, true);
+                masterItem.Event = cleanArrayStr(`${masterItem.Event}/${newItem.Event}`, false, masterItem.Name, masterItem.ID);
+                return { imported: 0, merged: 1 };
+            }
+            
+        } else {
+            // 【規則4後半】衝突且有多個 Locked 為 True -> 全部解除鎖定，加入新衝突待勘誤
+            existing.forEach(e => {
+                if(e.Locked === 'True') e.Locked = 'False';
+            });
+            newItem.Locked = 'False';
+            db.push(newItem);
+            return { imported: 1, merged: 0 };
+        }
+    }
+
     function importCSV() {
         const file = document.getElementById('csvFile').files[0];
         if (!file) return alert('請選擇CSV檔案');
         const reader = new FileReader();
         reader.onload = function(e) {
             const lines = e.target.result.split('\n');
-            let newImportCount = 0; let newMergeCount = 0;
+            let processedCount = 0; let newMergeCount = 0; let newAddCount = 0;
+            
             // 跳過標題行
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
-                // 處理CSV可能帶有引號的逗號，簡易版分割
                 const parts = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
                 if (parts.length < 7) continue;
                 
                 let [Type, ID, Name, C1, Expiry, Event, Locked] = parts;
                 Type = Type.toUpperCase();
                 Locked = (Locked === 'True') ? 'True' : 'False';
-                newImportCount++;
+                processedCount++;
 
-                let existingIndex = db.findIndex(item => item.ID === ID);
-                if (existingIndex > -1) {
-                    let ex = db[existingIndex];
-                    let isConflict = ex.Type !== Type || ex.Name !== Name || ex.C1 !== C1;
-                    
-                    if (!isConflict) {
-                        // 完全相同，合併 Event/Expiry
-                        ex.Expiry = cleanArrayStr(`${ex.Expiry}/${Expiry}`, true);
-                        ex.Event = cleanArrayStr(`${ex.Event}/${Event}`, false, ex.Name, ex.ID);
-                        if(Locked === 'True') ex.Locked = 'True';
-                        newMergeCount++;
-                    } else {
-                        // 有衝突，檢查 Locked
-                        if (Locked === 'True' || ex.Locked === 'True') {
-                            let master = Locked === 'True' ? {Type, ID, Name, C1} : {Type:ex.Type, ID:ex.ID, Name:ex.Name, C1:ex.C1};
-                            ex.Type = master.Type; ex.Name = master.Name; ex.C1 = master.C1;
-                            ex.Expiry = cleanArrayStr(`${ex.Expiry}/${Expiry}`, true);
-                            ex.Event = cleanArrayStr(`${ex.Event}/${Event}`, false, ex.Name, ex.ID);
-                            ex.Locked = 'True';
-                            newMergeCount++;
-                        } else {
-                            // 無鎖定且衝突，直接新增（勘誤頁面處理）
-                            db.push({Type, ID, Name, C1, Expiry: cleanArrayStr(Expiry, true), Event: cleanArrayStr(Event, false, Name, ID), Locked});
-                        }
-                    }
-                } else {
-                    db.push({Type, ID, Name, C1, Expiry: cleanArrayStr(Expiry, true), Event: cleanArrayStr(Event, false, Name, ID), Locked});
-                }
+                let newItem = {Type, ID, Name, C1, Expiry, Event, Locked};
+                let res = upsertItem(newItem);
+                newAddCount += res.imported;
+                newMergeCount += res.merged;
             }
-            stats.imported += newImportCount;
+            
+            stats.imported += processedCount;
             stats.merged += newMergeCount;
             saveData();
-            alert(`匯入完成！新增/掃描 ${newImportCount} 筆，合併 ${newMergeCount} 筆。`);
+            alert(`匯入完成！共掃描 ${processedCount} 筆資料。\n(新增或衝突 ${newAddCount} 筆，成功合併 ${newMergeCount} 筆)`);
+            if (document.getElementById('search').classList.contains('active')) renderSearch();
+            if (document.getElementById('error').classList.contains('active')) renderError();
         };
         reader.readAsText(file);
     }
@@ -377,17 +426,24 @@
         const type = document.getElementById('addType').value;
         const text = document.getElementById('addInput').value;
         const lines = text.split('\n').filter(l => l.trim());
-        let added = 0;
+        let processed = 0; let added = 0; let merged = 0;
+        
         lines.forEach(line => {
             const [ID, Name] = line.split('/');
             if (ID && Name) {
-                db.push({ Type: type, ID: ID.trim(), Name: Name.trim(), C1: '未分類', Expiry: '', Event: '', Locked: 'False' });
-                added++;
+                processed++;
+                let newItem = { Type: type, ID: ID.trim(), Name: Name.trim(), C1: '未分類', Expiry: '', Event: '', Locked: 'False' };
+                let res = upsertItem(newItem);
+                added += res.imported;
+                merged += res.merged;
             }
         });
+        
+        stats.imported += processed;
+        stats.merged += merged;
         saveData();
         document.getElementById('addInput').value = '';
-        alert(`成功新增 ${added} 筆資料`);
+        alert(`成功處理 ${processed} 筆資料\n(新增或衝突 ${added} 筆，成功合併 ${merged} 筆)`);
     }
 
     // --- 2. 搜尋功能 ---
