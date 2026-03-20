@@ -226,13 +226,22 @@
     let db = []; 
     let stats = { imported: 0, merged: 0 };
 
-    // --- 初始化 ---
+        // --- 初始化 ---
     window.onload = () => {
         const stored = localStorage.getItem('retailDB');
-        if (stored) db = JSON.parse(stored);
+        if (stored) {
+            db = JSON.parse(stored);
+            // 自動修復：將 undefined, null, 或空字串的 Locked 設為 'False'
+            db.forEach(item => {
+                if (item.Locked === undefined || item.Locked === 'undefined' || item.Locked === null || item.Locked === '') {
+                    item.Locked = 'False';
+                }
+            });
+        }
         updateStatsUI();
         renderAddType();
     };
+
 
     function saveData() {
         localStorage.setItem('retailDB', JSON.stringify(db));
@@ -382,20 +391,24 @@
     }
 
     // --- 2. 搜尋功能 ---
-    function populateSearchDropdowns() {
+       function populateSearchDropdowns() {
         const c1Set = new Set(), eventSet = new Set();
         db.forEach(item => {
             if(item.C1) c1Set.add(item.C1);
             if(item.Event) item.Event.split('/').forEach(e => { if(e) eventSet.add(e); });
         });
+        
         let c1Html = `<option value="">C1: 全部搜尋</option>`;
-        [...c1Set].forEach(c => c1Html += `<option value="${c}">${c}</option>`);
+        // 將 Set 轉為陣列，並使用 localeCompare 進行排序 (支援中英文)
+        [...c1Set].sort((a, b) => a.localeCompare(b, 'zh-TW')).forEach(c => c1Html += `<option value="${c}">${c}</option>`);
         document.getElementById('searchC1').innerHTML = c1Html;
 
         let evHtml = `<option value="">Event: 全部搜尋</option>`;
-        [...eventSet].forEach(e => evHtml += `<option value="${e}">${e}</option>`);
+        // Event 也順便加上排序，讓尋找活動標籤更方便
+        [...eventSet].sort((a, b) => a.localeCompare(b, 'zh-TW')).forEach(e => evHtml += `<option value="${e}">${e}</option>`);
         document.getElementById('searchEvent').innerHTML = evHtml;
     }
+
 
     function clearOrder() {
         db.forEach(item => {
@@ -689,8 +702,10 @@
 
     // --- 5. 分類頁面 ---
     function renderClassify() {
-        const c1s = [...new Set(db.map(i=>i.C1).filter(Boolean))];
+        // 抓出所有不重複的 C1，過濾掉空值後，使用 localeCompare 排序
+        const c1s = [...new Set(db.map(i=>i.C1).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-TW'));
         const sel = document.getElementById('classifySelect');
+        
         sel.innerHTML = `<option value="">選擇分類</option><option value="NEW_CATEGORY">-- 新增分類 --</option>`;
         c1s.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
         document.getElementById('newCategoryInput').style.display = 'none';
@@ -706,6 +721,7 @@
         });
         res.innerHTML = html;
     }
+
 
     function handleClassifySelect() {
         if(document.getElementById('classifySelect').value === 'NEW_CATEGORY') {
