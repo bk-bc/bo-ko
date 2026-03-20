@@ -227,20 +227,36 @@
     let stats = { imported: 0, merged: 0 };
 
         // --- 初始化 ---
-    window.onload = () => {
-        const stored = localStorage.getItem('retailDB');
-        if (stored) {
-            db = JSON.parse(stored);
-            // 自動修復：將 undefined, null, 或空字串的 Locked 設為 'False'
-            db.forEach(item => {
-                if (item.Locked === undefined || item.Locked === 'undefined' || item.Locked === null || item.Locked === '') {
-                    item.Locked = 'False';
-                }
-            });
-        }
-        updateStatsUI();
-        renderAddType();
-    };
+window.onload = () => {
+    const stored = localStorage.getItem('retailDB');
+    if (stored) {
+        let rawData = JSON.parse(stored);
+        
+        // 1. 先做初步修復：確保所有項目都有基本欄位，避免後續噴錯
+        rawData.forEach(item => {
+            if (item.Locked === undefined || item.Locked === 'undefined' || item.Locked === null || item.Locked === '') {
+                item.Locked = 'False';
+            }
+            if (!item.C1) item.C1 = '未分類';
+            // 統一格式化 Expiry 和 Event
+            item.Expiry = cleanArrayStr(item.Expiry, true);
+            item.Event = cleanArrayStr(item.Event, false, item.Name, item.ID);
+        });
+
+        // 2. 執行「大掃除」：將舊資料全部重新跑一遍 upsert 規則
+        // 先清空目前的 db，然後逐一重新塞入
+        db = []; 
+        rawData.forEach(item => {
+            upsertItem(item);
+        });
+
+        // 3. 儲存重整後的結果
+        saveData();
+    }
+    updateStatsUI();
+    renderAddType();
+};
+
 
 
     function saveData() {
