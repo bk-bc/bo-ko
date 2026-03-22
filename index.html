@@ -849,23 +849,86 @@ window.onload = () => {
     }
 
     function searchActivity() {
-        const text = document.getElementById('activitySearch').value;
-        const keywords = text.split('\n').filter(k => k.trim());
-        const res = document.getElementById('activitySearchResult');
-        res.innerHTML = '';
+    // 1. 取得使用者輸入的多行文字 (請確認你的 textarea ID 是不是 activityInput)
+    const inputText = document.getElementById('activityInput').value;
+    if (!inputText.trim()) {
+        alert("請輸入要搜尋的資料！");
+        return;
+    }
+
+    // 將輸入的文字以換行符號切開，並過濾掉空白行
+    const lines = inputText.split('\n').map(line => line.trim()).filter(Boolean);
+    
+    // 2. 準備兩個「箱子」來裝結果
+    let foundItems = [];
+    let missingItems = [];
+
+    // 3. 開始分類 (比對資料庫)
+    lines.forEach(keyword => {
+        // 假設你的搜尋邏輯是比對 ID 或 Name
+        let match = db.find(item => item.ID === keyword || item.Name === keyword);
         
-        keywords.forEach(kw => {
-            let matches = db.filter(i => i.Name.toLowerCase().includes(kw.trim().toLowerCase()));
-            let p = document.createElement('div');
-            if(matches.length === 0) {
-                p.innerText = `${kw}：未搜尋到`;
-                p.style.color = 'red';
-            } else {
-                p.innerText = `${kw}：找到 ${matches[0].Name} ` + (matches.length>1 ? `(${matches.length}筆重複)` : '');
-            }
-            res.appendChild(p);
+        if (match) {
+            foundItems.push(match);
+        } else {
+            missingItems.push(keyword); // 找不到的，把關鍵字原封不動存起來
+        }
+    });
+
+    // 4. 準備開始渲染畫面 (請確認你的結果顯示區塊 ID 是不是 searchResult)
+    const resDiv = document.getElementById('searchResult');
+    resDiv.innerHTML = ''; // 先清空原本的畫面
+
+    // 5. 渲染「有找到」的商品卡片
+    foundItems.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        // 這裡的卡片內容請替換成你原本顯示的格式
+        card.innerHTML = `
+            <div>
+                <div class="card-title">${item.Name}</div>
+                <div class="card-sub">${item.ID} | ${item.C1} | ${item.Event || '無活動'}</div>
+            </div>
+        `;
+        resDiv.appendChild(card);
+    });
+
+    // 6. 渲染「未搜尋到」的統一清單 (如果有漏網之魚的話)
+    if (missingItems.length > 0) {
+        const missingCard = document.createElement('div');
+        missingCard.className = 'card';
+        // 特別設定樣式讓它很醒目，且佔滿整排
+        missingCard.style.border = '2px solid #ff4d4f'; 
+        missingCard.style.backgroundColor = '#fff1f0';
+        missingCard.style.gridColumn = '1 / -1'; 
+        
+        // 組合 HTML：包含標題、一鍵複製按鈕、以及唯讀的 textarea
+        missingCard.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="card-title" style="color: #ff4d4f; margin: 0;">⚠️ 未搜尋到 (共 ${missingItems.length} 筆)：</div>
+                <button onclick="copyMissingItems()" style="background: #ff4d4f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">一鍵複製</button>
+            </div>
+            <textarea id="missingListText" readonly style="width: 100%; min-height: 120px; margin-top: 10px; border: 1px solid #ffccc7; border-radius: 4px; padding: 8px; font-family: monospace;">${missingItems.join('\n')}</textarea>
+        `;
+        resDiv.appendChild(missingCard);
+    }
+}
+
+// 7. 新增這個輔助函式，用來實現「一鍵複製」功能
+function copyMissingItems() {
+    const copyText = document.getElementById("missingListText");
+    if (copyText) {
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // 支援手機版
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert("已複製所有未找到的項目！可以直接貼到新增區塊了。");
+        }).catch(err => {
+            console.error('複製失敗:', err);
+            alert("複製失敗，請手動全選複製。");
         });
     }
+}
+
 
     function addActivity() {
         const evName = document.getElementById('activityInput').value.trim();
