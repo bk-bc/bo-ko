@@ -871,8 +871,14 @@ window.onload = () => {
 
     // 3. 比對資料庫 (假設你的資料庫變數名稱是 db)
     lines.forEach(keyword => {
-        // 同時比對 ID 或 Name
-        let match = db.find(item => item.ID === keyword || item.Name === keyword);
+        const lowerKW = keyword.toLowerCase(); // 轉小寫，增加搜尋成功率
+        
+        // 關鍵修改：使用 .includes() 進行模糊比對
+        // 只要 ID 包含關鍵字，或者 Name 包含關鍵字，就算找到！
+        let match = db.find(item => 
+            (item.ID && item.ID.toLowerCase().includes(lowerKW)) || 
+            (item.Name && item.Name.toLowerCase().includes(lowerKW))
+        );
         
         if (match) {
             foundItems.push(match);
@@ -880,6 +886,7 @@ window.onload = () => {
             missingItems.push(keyword);
         }
     });
+
 
     // 4. 開始渲染畫面
     resDiv.innerHTML = ''; // 清空舊內容
