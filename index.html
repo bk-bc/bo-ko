@@ -317,87 +317,95 @@ window.onload = () => {
             console.error("Barcode error:", e);
         }
     }
-        // --- 核心資料清洗與寫入邏輯 ---
-    function upsertItem(newItem) {
-        // 【新增規則：強制造型校驗】
-        // 檢查 Name 是否至少有 6 位數，且開頭 6 位必須是數字
-        const namePrefix = newItem.Name.substring(0, 6);
-        const isSixDigits = /^\d{6}$/.test(namePrefix);
+function upsertItem(newItem) {
+    // 【新增規則：強制造型校驗】
+    // 檢查 Name 是否至少有 6 位數，且開頭 6 位必須是數字
+    const namePrefix = newItem.Name.substring(0, 6);
+    const isSixDigits = /^\d{6}$/.test(namePrefix);
 
-        if (!isSixDigits) {
-            console.warn(`過濾無效資料：ID ${newItem.ID} 的 Name "${newItem.Name}" 不符合 6 位數字開頭規則。`);
-            return { imported: 0, merged: 0 }; // 直接回傳，不執行後續的 push 或 merge
-        }
+    if (!isSixDigits) {
+        console.warn(`過濾無效資料：ID ${newItem.ID} 的 Name "${newItem.Name}" 不符合 6 位數字開頭規則。`);
+        return { imported: 0, merged: 0 }; 
+    }
 
-        // ... 以下維持原本的內容 (Expiry/Event 處理, existing.filter 等) ...
+    // 找出資料庫中所有同 ID 的項目
+    let existing = db.filter(i => i.ID === newItem.ID);
+
+    // 情況 1：完全沒有重複的 ID -> 清洗後直接新增
+    if (existing.length === 0) {
         newItem.Expiry = cleanArrayStr(newItem.Expiry, true);
         newItem.Event = cleanArrayStr(newItem.Event, false, newItem.Name, newItem.ID);
+        db.push(newItem);
+        return { imported: 1, merged: 0 };
+    }
 
-        // 找出資料庫中所有同 ID 的項目
-        let existing = db.filter(i => i.ID === newItem.ID);
+    // =====================================================================
+    // 🔥 【黃金防護網：提前聯集 Expiry 與 Event】 🔥
+    // 只要 ID 相同，不管後續誰輸誰贏，先把所有人的努力成果收集起來！
+    let allExp = newItem.Expiry || "";
+    let allEv = newItem.Event || "";
+    
+    existing.forEach(e => {
+        allExp += "/" + (e.Expiry || "");
+        allEv += "/" + (e.Event || "");
+    });
 
-        // 情況 1：完全沒有重複的 ID -> 直接新增
-        if (existing.length === 0) {
+    // 統一進行清洗去重複
+    let finalPooledExpiry = cleanArrayStr(allExp, true);
+    
+    // 將聯集後的結果，無條件發放回 newItem 與所有 existing 項目身上
+    newItem.Expiry = finalPooledExpiry;
+    newItem.Event = cleanArrayStr(allEv, false, newItem.Name, newItem.ID);
+    
+    existing.forEach(e => {
+        e.Expiry = finalPooledExpiry;
+        e.Event = cleanArrayStr(allEv, false, e.Name, e.ID); // 針對各自的 Name 進行清洗
+    });
+    // =====================================================================
+
+    // 情況 2：尋找是否有 Name, Type, C1「完全一致」的項目
+    let perfectMatch = existing.find(e => e.Name === newItem.Name && e.Type === newItem.Type && e.C1 === newItem.C1);
+
+    if (perfectMatch) {
+        // 【規則1 & 規則4前半】完全重複
+        // (Expiry 和 Event 已經在上方聯集過了，這裡不需再寫)
+        if (newItem.Locked === 'True') perfectMatch.Locked = 'True';
+        return { imported: 0, merged: 1 };
+    }
+
+    // --- 執行到此，代表 ID 相同，但 Name, Type, C1 至少有一項不同 (產生衝突) ---
+    let lockedExisting = existing.filter(e => e.Locked === 'True');
+    let totalLocks = lockedExisting.length + (newItem.Locked === 'True' ? 1 : 0);
+
+    if (totalLocks === 0) {
+        // 【規則2】衝突且無 Locked -> 當作新衝突項目加入，待勘誤頁面處理
+        db.push(newItem); 
+        // 💡 備註：此時 existing 與 newItem 身上都有完整的日期，日後勘誤刪除任一筆皆無損耗
+        return { imported: 1, merged: 0 };
+        
+    } else if (totalLocks === 1) {
+        // 【規則3】衝突且只有一個 Locked 為 True
+        if (newItem.Locked === 'True') {
+            // 新資料是鎖定的：刪除舊有同 ID 項目，推入新鎖定項目
+            db = db.filter(i => i.ID !== newItem.ID);
             db.push(newItem);
-            return { imported: 1, merged: 0 };
-        }
-
-        // 情況 2：尋找是否有 Name, Type, C1「完全一致」的項目
-        let perfectMatch = existing.find(e => e.Name === newItem.Name && e.Type === newItem.Type && e.C1 === newItem.C1);
-
-        if (perfectMatch) {
-            // 【規則1 & 規則4前半】完全重複則直接合併 Event, Expiry
-            perfectMatch.Expiry = cleanArrayStr(`${perfectMatch.Expiry}/${newItem.Expiry}`, true);
-            perfectMatch.Event = cleanArrayStr(`${perfectMatch.Event}/${newItem.Event}`, false, perfectMatch.Name, perfectMatch.ID);
-            // 若新資料是鎖定的，確保合併後維持鎖定
-            if (newItem.Locked === 'True') perfectMatch.Locked = 'True';
+            return { imported: 1, merged: existing.length };
+        } else {
+            // 舊資料中有鎖定的：直接保留舊的，拋棄新資料的 Name/Type/C1
+            // (舊資料已在上方獲取了新資料帶來的日期與活動)
             return { imported: 0, merged: 1 };
         }
-
-        // --- 執行到此，代表 ID 相同，但 Name, Type, C1 至少有一項不同 (產生衝突) ---
-        let lockedExisting = existing.filter(e => e.Locked === 'True');
-        let totalLocks = lockedExisting.length + (newItem.Locked === 'True' ? 1 : 0);
-
-        if (totalLocks === 0) {
-            // 【規則2】衝突且無 Locked -> 當作新衝突項目加入，待勘誤頁面處理
-            db.push(newItem);
-            return { imported: 1, merged: 0 };
-            
-        } else if (totalLocks === 1) {
-            // 【規則3】衝突且只有一個 Locked 為 True -> 無視其他資訊，強制合併至 locked 項目
-            if (newItem.Locked === 'True') {
-                // 新資料是鎖定的：吸收舊有所有同 ID 資料的 Expiry/Event，並取代它們
-                let allExp = newItem.Expiry;
-                let allEv = newItem.Event;
-                existing.forEach(e => {
-                    allExp = `${allExp}/${e.Expiry}`;
-                    allEv = `${allEv}/${e.Event}`;
-                });
-                newItem.Expiry = cleanArrayStr(allExp, true);
-                newItem.Event = cleanArrayStr(allEv, false, newItem.Name, newItem.ID);
-                
-                // 刪除舊有同 ID 項目，推入新鎖定項目
-                db = db.filter(i => i.ID !== newItem.ID);
-                db.push(newItem);
-                return { imported: 1, merged: existing.length };
-            } else {
-                // 舊資料中有鎖定的：將新資料的 Expiry/Event 合併進舊的，拋棄新資料的 Name/Type/C1
-                let masterItem = lockedExisting[0];
-                masterItem.Expiry = cleanArrayStr(`${masterItem.Expiry}/${newItem.Expiry}`, true);
-                masterItem.Event = cleanArrayStr(`${masterItem.Event}/${newItem.Event}`, false, masterItem.Name, masterItem.ID);
-                return { imported: 0, merged: 1 };
-            }
-            
-        } else {
-            // 【規則4後半】衝突且有多個 Locked 為 True -> 全部解除鎖定，加入新衝突待勘誤
-            existing.forEach(e => {
-                if(e.Locked === 'True') e.Locked = 'False';
-            });
-            newItem.Locked = 'False';
-            db.push(newItem);
-            return { imported: 1, merged: 0 };
-        }
+        
+    } else {
+        // 【規則4後半】衝突且有多個 Locked 為 True -> 全部解除鎖定，加入新衝突待勘誤
+        existing.forEach(e => {
+            if(e.Locked === 'True') e.Locked = 'False';
+        });
+        newItem.Locked = 'False';
+        db.push(newItem);
+        return { imported: 1, merged: 0 };
     }
+}
 
     function importCSV() {
         const file = document.getElementById('csvFile').files[0];
