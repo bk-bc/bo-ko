@@ -278,18 +278,66 @@ window.onload = () => {
     }
 
     // --- 共用工具 ---
-    function cleanArrayStr(str, isDate = false, itemName = '', itemID = '') {
-        if (!str) return '';
-        let arr = str.split('/').map(s => s.trim()).filter(Boolean);
-        if (isDate) {
-            arr = arr.filter(d => /^20\d{6}$/.test(d));
-        } else {
-            // Regex排除與Name或ID完全相同之Event
+function cleanArrayStr(str, isDate = false, itemName = '', itemID = '') {
+    if (!str) return '';
+    
+    // 將字串切開成陣列、去空白、過濾空值
+    let arr = str.split('/').map(s => s.trim()).filter(Boolean);
+    
+    if (isDate) {
+        // ========== 處理「到期日 (Expiry)」 ==========
+        // 1. 嚴格過濾：只保留 20 開頭的 8 位數字 (你原本的強大防護)
+        arr = arr.filter(d => /^20\d{6}$/.test(d));
+        
+        // 2. 排序日期：讓最快到期的排在前面 (方便檢視)
+        arr.sort();
+        
+    } else {
+        // ========== 處理「活動 (Event)」 ==========
+        const today = new Date();
+        const expirationDays = 30; // 這裡我先幫你設為 30 天，你可以自由改成 14
+
+        arr = arr.filter(e => {
+            // 【關卡一：排除與 Name 或 ID 完全相同的活動】
             const exactMatchRegex = new RegExp(`^(${escapeRegExp(itemName)}|${escapeRegExp(itemID)})$`, 'i');
-            arr = arr.filter(e => !exactMatchRegex.test(e));
-        }
-        return [...new Set(arr)].join('/');
+            if (exactMatchRegex.test(e)) {
+                return false; // 觸發規則，把它濾掉
+            }
+
+            // 【關卡二：檢查是否為帶日期的活動，並判斷過期】
+            const dateMatch = e.match(/^(\d{8})_/);
+            if (dateMatch) {
+                const eventDateStr = dateMatch[1];
+                
+                // 確保年份合理 (20xx開頭) 才進行運算，防呆機制
+                if (eventDateStr.substring(0, 2) === "20") {
+                    const year = parseInt(eventDateStr.substring(0, 4));
+                    const month = parseInt(eventDateStr.substring(4, 6)) - 1; // JS月份從0開始
+                    const day = parseInt(eventDateStr.substring(6, 8));
+                    const eventDate = new Date(year, month, day);
+                    
+                    // 確認日期格式正確 (避免像 20261345 這種無效日期)
+                    if (!isNaN(eventDate.getTime())) {
+                        const diffTime = today - eventDate;
+                        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                        
+                        // 如果超過設定天數，濾掉！
+                        if (diffDays > expirationDays) {
+                            console.log(`活動已過期自動清除: ${e}`);
+                            return false; 
+                        }
+                    }
+                }
+            }
+            
+            // 如果通過了第一關(沒重複)跟第二關(沒過期，或根本沒帶日期)，就保留！
+            return true;
+        });
     }
+    
+    // 最後統一去除重複項，並用 '/' 組合回去
+    return [...new Set(arr)].join('/');
+}
 
     function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
