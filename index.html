@@ -529,23 +529,30 @@ function upsertItem(newItem) {
     }
 
     // --- 2. 搜尋功能 ---
-       function populateSearchDropdowns() {
+           function populateSearchDropdowns() {
         const c1Set = new Set(), eventSet = new Set();
         db.forEach(item => {
             if(item.C1) c1Set.add(item.C1);
-            if(item.Event) item.Event.split('/').forEach(e => { if(e) eventSet.add(e); });
+            if(item.Event) {
+                item.Event.split('/').forEach(e => { 
+                    if(e) {
+                        // 關鍵：過濾掉尾端的 _001 序號，再塞入 Set
+                        const cleanEvent = e.replace(/_\d{3}$/, '');
+                        eventSet.add(cleanEvent); 
+                    }
+                });
+            }
         });
         
         let c1Html = `<option value="">C1: 全部搜尋</option>`;
-        // 將 Set 轉為陣列，並使用 localeCompare 進行排序 (支援中英文)
         [...c1Set].sort((a, b) => a.localeCompare(b, 'zh-TW')).forEach(c => c1Html += `<option value="${c}">${c}</option>`);
         document.getElementById('searchC1').innerHTML = c1Html;
 
         let evHtml = `<option value="">Event: 全部搜尋</option>`;
-        // Event 也順便加上排序，讓尋找活動標籤更方便
         [...eventSet].sort((a, b) => a.localeCompare(b, 'zh-TW')).forEach(e => evHtml += `<option value="${e}">${e}</option>`);
         document.getElementById('searchEvent').innerHTML = evHtml;
     }
+
 
 
     function clearOrder() {
@@ -603,11 +610,28 @@ function upsertItem(newItem) {
                 return (kw1 || kw2) && match1 && match2;
             } else {
                 if (c1 && item.C1 !== c1) return false;
-                if (ev && !item.Event.split('/').includes(ev)) return false;
+                                if (ev && !item.Event.split('/').some(e => e.replace(/_\d{3}$/, '') === ev)) return false;
+                
                 let textMatch = (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
                                 (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
                 return textMatch;
             }
+        });
+
+        // 🔥 新增：如果使用者有選擇 Event 篩選，則根據隱藏序號進行排序
+        if (ev && !isFresh) {
+            filtered.sort((a, b) => {
+                // 找出 a 跟 b 身上屬於該活動的完整字串 (例如：20260701_中元_005)
+                const evA = a.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
+                const evB = b.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
+                
+                // 提取最後的 3 位數字，若沒匹配到則預設為 999 (放最後面)
+                const seqA = evA.match(/_(\d{3})$/) ? parseInt(evA.match(/_(\d{3})$/)[1], 10) : 999;
+                const seqB = evB.match(/_(\d{3})$/) ? parseInt(evB.match(/_(\d{3})$/)[1], 10) : 999;
+                
+                return seqA - seqB; // 升冪排序
+            });
+
         });
 
         document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 50 ? '50+' : filtered.length} (顯示上限50筆)`;
@@ -884,18 +908,23 @@ function upsertItem(newItem) {
     }
 
     // --- 6. 活動頁面 ---
-    function renderActivity() {
+        function renderActivity() {
         const events = new Set();
-        db.forEach(i => i.Event.split('/').forEach(e => { if(e) events.add(e); }));
+        // 收集標籤時拔除序號
+        db.forEach(i => i.Event.split('/').forEach(e => { 
+            if(e) events.add(e.replace(/_\d{3}$/, '')); 
+        }));
+        
         const tagsDiv = document.getElementById('activityTags');
         tagsDiv.innerHTML = '';
-        events.forEach(e => {
+        events.forEach(cleanName => {
             const btn = document.createElement('button');
-            btn.innerText = `✖ ${e}`;
+            btn.innerText = `✖ ${cleanName}`;
             btn.onclick = () => {
-                if(confirm(`清除所有「${e}」活動標籤？`)) {
+                if(confirm(`清除所有「${cleanName}」活動標籤？`)) {
                     db.forEach(item => {
-                        item.Event = item.Event.split('/').filter(ev => ev !== e).join('/');
+                        // 刪除時，過濾掉所有「拔除序號後」等於該名稱的標籤
+                        item.Event = item.Event.split('/').filter(ev => ev.replace(/_\d{3}$/, '') !== cleanName).join('/');
                     });
                     saveData(); renderActivity();
                 }
@@ -903,6 +932,7 @@ function upsertItem(newItem) {
             tagsDiv.appendChild(btn);
         });
     }
+
 
     function searchActivity() {
     // 1. 對應你的 HTML ID: activitySearch
@@ -996,23 +1026,42 @@ function copyMissingToClipboard() {
 }
 
 
-    function addActivity() {
+        function addActivity() {
         const evName = document.getElementById('activityInput').value.trim();
         if(!evName) return alert('請輸入活動名稱');
         const text = document.getElementById('activitySearch').value;
         const keywords = text.split('\n').filter(k => k.trim());
         
         let added = 0;
+        let seq = 1; // 順序計數器
+
         keywords.forEach(kw => {
-            db.filter(i => i.Name.toLowerCase().includes(kw.trim().toLowerCase())).forEach(item => {
-                item.Event = cleanArrayStr(`${item.Event}/${evName}`, false, item.Name, item.ID);
+            // 找出符合的商品
+            let matches = db.filter(i => 
+                (i.Name && i.Name.toLowerCase().includes(kw.trim().toLowerCase())) || 
+                (i.ID && i.ID.toLowerCase().includes(kw.trim().toLowerCase()))
+            );
+
+            matches.forEach(item => {
+                // 防呆：先清除該商品身上「拔除序號後」與目前要加入的活動同名的舊標籤
+                item.Event = item.Event.split('/').filter(e => e.replace(/_\d{3}$/, '') !== evName).join('/');
+                
+                // 產生 _001, _002 格式的標籤
+                let seqStr = seq.toString().padStart(3, '0');
+                let newEv = `${evName}_${seqStr}`;
+                
+                item.Event = cleanArrayStr(`${item.Event}/${newEv}`, false, item.Name, item.ID);
                 added++;
             });
+            
+            // 只要這個關鍵字有配對到商品，序號就加 1（確保同一行的多個商品共用同排序，下一行遞增）
+            if (matches.length > 0) seq++; 
         });
         saveData();
         alert(`已成功加入 ${added} 筆活動標籤`);
         renderActivity();
     }
+
 
 </script>
 </body>
