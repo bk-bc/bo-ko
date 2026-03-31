@@ -631,7 +631,7 @@ function upsertItem(newItem) {
                 
                 return seqA - seqB; // 升冪排序
             });
-
+        }
         
 
         document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 50 ? '50+' : filtered.length} (顯示上限50筆)`;
