@@ -67,21 +67,37 @@
         column-gap: 15px !important; /* 兩欄之間的間距 */
         width: 100% !important;
     }
-
+/* 縮小標題字型，避免長檔名撐破固定高度 */
+    #search.active .card-title,
+    #qa.active .card-title {
+        font-size: 0.9em !important;
+        line-height: 1.2 !important;
+        max-height: 2.4em !important; /* 最多顯示兩行字 */
+        overflow: hidden !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
     /* 確保卡片內容在換欄時不會被切斷 */
     #search.active .card,
     #qa.active .card {
-        display: block !important; /* 確保內容區塊完整 */
-        break-inside: avoid !important; /* 核心：防止卡片被從中間切開分到兩頁或兩欄 */
+  display: flex !important; /* 改用 flex 方便內容垂直置中 */
+        flex-direction: column;
+        justify-content: center; /* 內容垂直置中 */
+        align-items: center;     /* 內容水平置中 */
+        
+        break-inside: avoid !important;
         page-break-inside: avoid !important;
         border: 1px solid #ddd !important;
-        padding: 8px !important;
-        margin-bottom: 10px !important; /* 垂直間距 */
+        margin-bottom: 10px !important;
         text-align: center;
+        height: 120px !important;    /* 這裡的高度你可以依據標籤貼紙的大小自行調整 (例如 120px 或 3cm) */
+        overflow: hidden !important; /* 萬一字太多，強制截斷不撐開高度 */
+        box-sizing: border-box !important;
     }
 
     #search.active .card-sub { display: none !important; }
-    #search.active .card svg.barcode { height: 50px !important; width: 100% !important; }
+    #search.active .card svg.barcode { height: 50px !important; width: 100% !important; margin-top: auto; /* 自動推到底部 */ }
 
     /* 品保顏色標示維持 */
     #qa.active .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
