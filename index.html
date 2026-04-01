@@ -84,59 +84,57 @@
         display: none !important;
     }
 
-    body { background: white; padding: 0; }
-
-    #search.active #searchResult, 
+    /* 確保容器可以跨頁顯示 */
     #qa.active .print-container {
-        display: block !important; 
-        column-count: 3 !important; 
-        column-gap: 10px !important; 
+        display: block !important;
         width: 100% !important;
-        gap: 0 !important; /* 移除 Grid 的 gap 以免干擾 column 佈局 */
     }
 
-    #search.active .card,
-    #qa.active .card {
+    /* 日期分組的標題樣式 */
+    .qa-group-title {
+        width: 100% !important;
+        font-weight: bold;
+        background: #eee !important;
+        padding: 5px;
+        margin: 10px 0;
+        border-bottom: 2px solid #000;
+        -webkit-print-color-adjust: exact;
+        break-after: avoid; /* 防止標題與內容分開 */
+    }
+
+    /* 商品內容區：這裡才進行三欄排列 */
+    .qa-group {
+        column-count: 3 !important;
+        column-gap: 10px !important;
+        margin-bottom: 20px;
+    }
+
+    /* 卡片樣式 */
+    .qa-group .card {
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important; /* 品名在上，條碼在下 */
+        justify-content: space-between !important;
         align-items: center !important;
-        
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+        break-inside: avoid !important; /* 核心：防止卡片被切斷 */
         border: 1px solid #ddd !important;
-        margin-bottom: 5px !important; /* 減少間距以容納更多內容 */
-        padding: 8px !important;
-        height: 120px !important; 
-        overflow: hidden !important;
+        margin-bottom: 5px !important;
+        height: 120px !important;
+        padding: 5px !important;
         box-sizing: border-box !important;
-        background: transparent !important;
-        box-shadow: none !important; /* 列印不顯示陰影 */
     }
 
-    #search.active .card-title,
-    #qa.active .card-title {
-        font-size: 0.85em !important; /* 稍微縮小字體以適應三欄寬度 */
+    .qa-group .card-title {
+        font-size: 0.8em !important;
         line-height: 1.1 !important;
         max-height: 2.2em !important;
-        margin-bottom: 5px;
-        word-break: break-all; /* 強制換行防止撐寬 */
+        overflow: hidden;
     }
 
-    #search.active .card-sub { display: none !important; }
-
-    #search.active .card svg.barcode,
-    #qa.active .card svg.barcode { 
-        height: 45px !important; /* 三欄寬度較窄，條碼高度稍微調降更協調 */
-        width: 100% !important; 
-        margin-top: auto;
+    .qa-group .card svg.barcode {
+        height: 45px !important;
+        width: 100% !important;
     }
-
-    /* 品保顏色標示 */
-    #qa.active .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
-    #qa.active .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
 }
-/* 移除原本那個會鎖死單排的 540px Media Query，改用這個更靈活的 */
 @media (max-width: 350px) {
     #searchResult {
         /* 只有在寬度小於 350px (極小螢幕) 時才變回單排 */
