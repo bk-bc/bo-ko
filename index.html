@@ -52,40 +52,38 @@
         svg.barcode { width: 100%; max-height: 80px; }
 
 @media print {
-    /* 通用隱藏部分：不管在哪個分頁，導航和按鈕都不印 */
+    /* 通用隱藏部分 */
     header, .no-print, .nav-buttons, .card-actions, button, input {
         display: none !important;
     }
 
     body { background: white; padding: 0; }
 
-    /* --- 模式 A：搜尋頁面的「4列標籤」格式 --- */
-    #search.active #searchResult {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important; /* 強制四列 */
-        gap: 8px !important;
-    }
-    #search.active .card {
-        border: 1px solid #ddd !important;
-        padding: 5px !important;
-        text-align: center;
-        break-inside: avoid;
-    }
-    #search.active .card-sub { display: none !important; } /* 隱藏分類資訊 */
-    #search.active .card svg.barcode { height: 50px !important; }
-
-    /* --- 模式 B：品保頁面的「2列清單」格式 --- */
+    /* --- 關鍵修改：使用多欄佈局達成 1->2->3->4 的直向流向 --- */
+    #search.active #searchResult, 
     #qa.active .print-container {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important; /* 品保維持兩列，方便閱讀 */
-        gap: 20px !important;
+        display: block !important; /* 必須取消 Grid 模式 */
+        column-count: 2 !important; /* 設定為 2 欄 */
+        column-gap: 15px !important; /* 兩欄之間的間距 */
+        width: 100% !important;
     }
+
+    /* 確保卡片內容在換欄時不會被切斷 */
+    #search.active .card,
     #qa.active .card {
-        border: 1px solid #000 !important;
-        margin-bottom: 10px;
-        break-inside: avoid;
+        display: block !important; /* 確保內容區塊完整 */
+        break-inside: avoid !important; /* 核心：防止卡片被從中間切開分到兩頁或兩欄 */
+        page-break-inside: avoid !important;
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+        margin-bottom: 10px !important; /* 垂直間距 */
+        text-align: center;
     }
-    /* 保留品保的顏色標示 */
+
+    #search.active .card-sub { display: none !important; }
+    #search.active .card svg.barcode { height: 50px !important; width: 100% !important; }
+
+    /* 品保顏色標示維持 */
     #qa.active .bg-danger-light { background-color: #ffe6e6 !important; -webkit-print-color-adjust: exact; }
     #qa.active .bg-warning-light { background-color: #fff3cd !important; -webkit-print-color-adjust: exact; }
 }
