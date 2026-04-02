@@ -46,7 +46,7 @@
         .btn-yellow { background: var(--yellow); color: black; }
         .btn-lightblue { background: var(--lightblue); color: black; }
         
-        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;}
+        .flex-row { display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; margin-bottom: 10px;}
         .flex-row > * { flex: 1; }
         
         svg.barcode { width: 100%; max-height: 80px; }
@@ -907,7 +907,7 @@ function renderQA() {
                 <span style="font-weight: bold; font-size: 1.1em;">到期日: ${date}</span>
                 <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
             </div>
-            <div class="qa-items-container">
+            <div class="qa-items-container ">
         `;
         
         // 4. 每個商品變成獨立卡片 (配合列印時的 column-count)
