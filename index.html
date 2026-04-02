@@ -77,63 +77,115 @@
     height: auto !important;
     max-height: 70px;
 }
-
-/* --- 列印專用樣式 --- */
+/* 螢幕顯示用的品保三色提示 */
+.bg-month-current { background-color: #ffe6e6 !important; } /* 淺紅 */
+.bg-month-next    { background-color: #ffe5b4 !important; } /* 淺橘 */
+.bg-month-future  { background-color: #ffffcc !important; } /* 淺黃 */
 @media print {
-    header, .no-print, .nav-buttons, .card-actions, button, input {
+    /* 1. 頁面與全局設定 */
+    @page {
+        size: A4; /* 固定紙張為 A4 */
+        margin: 10mm; /* 設定邊距，這能自動隱藏瀏覽器預設印出的「網頁標題(智慧零售管理系統)」與網址 */
+    }
+
+    body { 
+        background: white !important; 
+        padding: 0 !important; 
+        margin: 0 !important; 
+        -webkit-print-color-adjust: exact !important; /* 強制印出背景顏色 */
+        print-color-adjust: exact !important;
+    }
+
+    /* 隱藏不需要印出的導覽列、表頭、按鈕與輸入框 */
+    header, .no-print, .nav-buttons, .card-actions, button, input, select, textarea {
         display: none !important;
     }
 
-    /* 確保容器可以跨頁顯示 */
+    /* 2. 搜尋與品保佈局：直列式由左至右 4 欄 */
+    #search.active #searchResult {
+        display: block !important;
+        column-count: 4 !important; 
+        column-gap: 8px !important; 
+        width: 100% !important;
+    }
+
     #qa.active .print-container {
         display: block !important;
         width: 100% !important;
     }
 
-    /* 日期分組的標題樣式 */
-    .qa-group-title {
-        width: 100% !important;
-        font-weight: bold;
-        background: #eee !important;
-        padding: 5px;
-        margin: 10px 0;
-        border-bottom: 2px solid #000;
-        -webkit-print-color-adjust: exact;
-        break-after: avoid; /* 防止標題與內容分開 */
+    /* 品保群組：針對同日期的商品進行 4 欄排列 */
+    #qa.active .qa-group {
+        column-count: 4 !important;
+        column-gap: 8px !important;
+        margin-bottom: 15px !important;
     }
 
-    /* 商品內容區：這裡才進行三欄排列 */
-    .qa-group {
-        column-count: 3 !important;
-        column-gap: 10px !important;
-        margin-bottom: 20px;
-    }
-
-    /* 卡片樣式 */
-    .qa-group .card {
+    /* 3. 卡片共用設定：固定高度防跑版 */
+    #search.active .card,
+    #qa.active .card {
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
         align-items: center !important;
-        break-inside: avoid !important; /* 核心：防止卡片被切斷 */
-        border: 1px solid #ddd !important;
-        margin-bottom: 5px !important;
-        height: 120px !important;
-        padding: 5px !important;
+        
+        break-inside: avoid !important;      /* 防止卡片從中間被切成兩半 */
+        page-break-inside: avoid !important; /* 確保超過頁面自動往下一列或下一頁排 */
+        border: 1px solid #aaa !important;   /* 邊框加深確保列印清晰 */
+        margin-bottom: 8px !important;
+        padding: 6px !important;
+        height: 110px !important;            /* 固定總高度 */
         box-sizing: border-box !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
     }
 
-    .qa-group .card-title {
-        font-size: 0.8em !important;
-        line-height: 1.1 !important;
-        max-height: 2.2em !important;
-        overflow: hidden;
-    }
-
-    .qa-group .card svg.barcode {
-        height: 45px !important;
+    /* 4. Name 專屬設定：固定留存兩行空間 */
+    #search.active .card-title,
+    #qa.active .card-title {
+        font-size: 0.85em !important;
+        line-height: 1.2 !important;
+        height: 2.4em !important; /* 強制鎖死高度為兩行 (1.2 * 2) */
         width: 100% !important;
+        text-align: center !important;
+        margin-bottom: 4px !important;
+
+        /* 超過兩行自動隱藏並顯示省略號 ... */
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        word-break: break-all !important;
     }
+
+    /* 隱藏搜尋結果中不需要的分類與活動資訊，只留 Name 和條碼 */
+    #search.active .card-sub { display: none !important; }
+
+    /* 5. 條碼置底設定 */
+    #search.active .card svg.barcode,
+    #qa.active .card svg.barcode {
+        height: 45px !important;
+        max-width: 100% !important;
+        margin-top: auto !important; /* 把它推到卡片最底部 */
+    }
+
+    /* 6. 品保專屬設定 */
+    /* 日期標題：獨立橫跨，不參與 4 欄排列 */
+    #qa.active .qa-group-title {
+        column-span: all !important; /* 關鍵：讓標題橫跨所有欄位 */
+        font-weight: bold !important;
+        font-size: 1em !important;
+        padding: 4px 0 !important;
+        margin: 10px 0 6px 0 !important;
+        border-bottom: 2px solid #333 !important;
+        break-after: avoid !important; /* 防止標題在上一頁，內容在下一頁 */
+        page-break-after: avoid !important;
+    }
+
+    /* 品保底色標示 (針對該群組內的所有卡片上色) */
+    #qa.active .bg-month-current .card { background-color: #ffcccc !important; } /* 當月：淺紅色 */
+    #qa.active .bg-month-next .card    { background-color: #ffe5b4 !important; } /* 次月：淺橙色 */
+    #qa.active .bg-month-future .card  { background-color: #ffffcc !important; } /* 最後：淺黃色 */
 }
 @media (max-width: 350px) {
     #searchResult {
@@ -802,66 +854,89 @@ function upsertItem(newItem) {
     }
 
     // --- 4. 品保頁面 ---
-    function renderQA() {
-        const showBc = document.getElementById('qaBarcodeToggle').checked;
-        const resDiv = document.getElementById('qaResult');
-        resDiv.innerHTML = '';
-        
-        const now = new Date();
-        const yyyymm = now.getFullYear() * 100 + (now.getMonth() + 1);
-        const yyyymm1 = now.getFullYear() * 100 + (now.getMonth() + 2); // Simplistic month math
-        const yyyymm2 = now.getFullYear() * 100 + (now.getMonth() + 3);
+function renderQA() {
+    const showBc = document.getElementById('qaBarcodeToggle').checked;
+    const resDiv = document.getElementById('qaResult');
+    resDiv.innerHTML = '';
+    
+    // 1. 更精準的月份計算 (解決年底跨年的 Bug)
+    const now = new Date();
+    const currentYearMonth = now.getFullYear() * 100 + (now.getMonth() + 1); // 當月 (ex: 202604)
 
-        const expMap = {}; // { '20260315': [items] }
-        db.forEach(item => {
-            if(item.Expiry) {
-                item.Expiry.split('/').forEach(d => {
-                    if(d) {
-                        if(!expMap[d]) expMap[d] = [];
-                        expMap[d].push(item);
-                    }
-                });
-            }
-        });
+    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextYearMonth = nextMonthDate.getFullYear() * 100 + (nextMonthDate.getMonth() + 1); // 次月 (ex: 202605)
 
-        Object.keys(expMap).sort().forEach(date => {
-            const ym = parseInt(date.substring(0, 6));
-            if (ym > yyyymm2) return; // Only show up to next 2 months
-            
-            let bgClass = '';
-            if (ym <= yyyymm) bgClass = 'bg-danger-light';
-            else if (ym <= yyyymm2) bgClass = 'bg-warning-light';
-
-            const groupDiv = document.createElement('div');
-            groupDiv.className = `card ${bgClass}`;
-            let html = `<div class="card-title flex-row">
-                            <span>到期日: ${date}</span>
-                            <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
-                        </div>`;
-            
-            expMap[date].forEach((item, idx) => {
-                let svgId = `qa_${date}_${idx}`;
-                html += `
-                    <div style="border-top:1px dashed #ccc; padding-top:5px; margin-top:5px;">
-                        <div class="flex-row">
-                            <span style="flex:1">${item.Name}</span>
-                            <button class="btn-warning no-print" style="flex:0;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
-                        </div>
-                        ${showBc ? `<div style="text-align:center;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                    </div>
-                `;
+    const expMap = {}; // { '20260315': [items] }
+    db.forEach(item => {
+        if(item.Expiry) {
+            item.Expiry.split('/').forEach(d => {
+                if(d) {
+                    if(!expMap[d]) expMap[d] = [];
+                    expMap[d].push(item);
+                }
             });
-            groupDiv.innerHTML = html;
-            resDiv.appendChild(groupDiv);
-            
-            if(showBc) {
-                expMap[date].forEach((item, idx) => {
-                    renderBarcode(`qa_${date}_${idx}`, item.ID, item.Type);
-                });
-            }
-        });
-    }
+        }
+    });
 
+    Object.keys(expMap).sort().forEach(date => {
+        const ym = parseInt(date.substring(0, 6));
+        
+        // 2. 移除原本的 return 限制，並套用新的紅、橘、黃三色邏輯
+        let bgClass = '';
+        if (ym <= currentYearMonth) {
+            bgClass = 'bg-month-current';   // 當月及已過期：紅
+        } else if (ym === nextYearMonth) {
+            bgClass = 'bg-month-next';      // 次月：橘
+        } else {
+            bgClass = 'bg-month-future';    // 未來月份：黃
+        }
+
+        // 3. 調整 HTML 結構：將整個日期的群組包裝，以利列印時的 4 欄排版
+        const groupDiv = document.createElement('div');
+        // 螢幕上為了區分群組，給外層加上背景色與基礎樣式
+        groupDiv.className = `qa-group ${bgClass}`; 
+        groupDiv.style.padding = "10px";
+        groupDiv.style.borderRadius = "8px";
+        groupDiv.style.marginBottom = "15px";
+        groupDiv.style.border = "1px solid #ddd";
+
+        // 群組標題與全批下架按鈕 (保留原本功能)
+        let html = `
+            <div class="qa-group-title flex-row" style="margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 5px;">
+                <span style="font-weight: bold; font-size: 1.1em;">到期日: ${date}</span>
+                <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
+            </div>
+            <div class="qa-items-container">
+        `;
+        
+        // 4. 每個商品變成獨立卡片 (配合列印時的 column-count)
+        expMap[date].forEach((item, idx) => {
+            let svgId = `qa_${date}_${idx}`;
+            html += `
+                <div class="card" style="background: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                    <div class="flex-row no-print" style="margin-bottom: 5px;">
+                        <span style="flex:1;"></span>
+                        <button class="btn-warning" style="flex:0; padding:2px 8px; font-size:12px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                    </div>
+                    
+                    <div class="card-title">${item.Name}</div>
+                    ${showBc ? `<div style="text-align:center; width:100%;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                </div>
+            `;
+        });
+        
+        html += `</div>`; // 結束 qa-items-container
+        groupDiv.innerHTML = html;
+        resDiv.appendChild(groupDiv);
+        
+        // 渲染條碼
+        if(showBc) {
+            expMap[date].forEach((item, idx) => {
+                renderBarcode(`qa_${date}_${idx}`, item.ID, item.Type);
+            });
+        }
+    });
+}
     function removeQA(date, itemId = null) {
         db.forEach(item => {
             if (!itemId || item.ID === itemId) {
