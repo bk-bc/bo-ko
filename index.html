@@ -34,7 +34,10 @@
         .card-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; word-break: break-all; }
         .card-sub { font-size: 0.9em; color: #555; margin-bottom: 8px; }
         .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-        
+        .no-print button, .btn-danger, .btn-warning {
+    flex-shrink: 0 !important; /* 🔥 防止按鈕因為空間不足而縮小或被擠掉 */
+    white-space: nowrap !important; /* 🔥 確保按鈕內的文字不會斷行 */
+}
         /* Inputs & Buttons */
         input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
         button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
