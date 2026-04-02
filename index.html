@@ -105,56 +105,46 @@
     }
 
     /* 2. 搜尋與品保佈局：直列式由左至右 4 欄 */
-    #search.active #searchResult {
+    /* 1. 搜尋與品保的多欄設定維持不變 */
+    #search.active #searchResult,
+    #qa.active .qa-group {
         display: block !important;
         column-count: 4 !important; 
         column-gap: 8px !important; 
         width: 100% !important;
     }
 
-    #qa.active .print-container {
-        display: block !important;
-             column-count: 2 !important;
-        width: 100% !important;
-    }
-
-    /* 品保群組：針對同日期的商品進行 4 欄排列 */
-    #qa.active .qa-group {
-        column-count: 2 !important;
-        column-gap: 8px !important;
-        margin-bottom: 15px !important;
-    }
-
-    /* 3. 卡片共用設定：固定高度防跑版 */
+    /* 2. 🔥 針對 iOS WebKit 的卡片核心修正 🔥 */
     #search.active .card,
     #qa.active .card {
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        align-items: center !important;
+        display: inline-block !important; /* 放棄 flex，改用 inline-block 防切斷 */
+        width: 100% !important;           /* 必須指定寬度，否則在 column 中會塌陷 */
+        position: relative !important;    /* 方便內部元素定位 */
         
-        break-inside: avoid !important;      /* 防止卡片從中間被切成兩半 */
-        page-break-inside: avoid !important; /* 確保超過頁面自動往下一列或下一頁排 */
-        border: 1px solid #aaa !important;   /* 邊框加深確保列印清晰 */
+        /* 加上所有防斷行前綴，伺候 iOS */
+        break-inside: avoid !important;      
+        page-break-inside: avoid !important; 
+        -webkit-column-break-inside: avoid !important; 
+        
+        border: 1px solid #aaa !important;   
         margin-bottom: 8px !important;
         padding: 6px !important;
-        height: 110px !important;            /* 固定總高度 */
+        height: 110px !important;            
         box-sizing: border-box !important;
         background-color: transparent !important;
         box-shadow: none !important;
+        text-align: center !important;
     }
 
-    /* 4. Name 專屬設定：固定留存兩行空間 */
+    /* 3. Name 專屬設定 (維持兩行) */
     #search.active .card-title,
     #qa.active .card-title {
         font-size: 0.85em !important;
         line-height: 1.2 !important;
-        height: 2.4em !important; /* 強制鎖死高度為兩行 (1.2 * 2) */
+        height: 2.4em !important; 
         width: 100% !important;
-        text-align: center !important;
-        margin-bottom: 4px !important;
+        margin: 0 auto 4px auto !important;
 
-        /* 超過兩行自動隱藏並顯示省略號 ... */
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
         -webkit-box-orient: vertical !important;
@@ -162,16 +152,18 @@
         word-break: break-all !important;
     }
 
-    /* 隱藏搜尋結果中不需要的分類與活動資訊，只留 Name 和條碼 */
     #search.active .card-sub { display: none !important; }
 
-    /* 5. 條碼置底設定 */
+    /* 4. 條碼排版修正：因為沒了 flex，改用絕對定位或直接限制高度 */
     #search.active .card svg.barcode,
     #qa.active .card svg.barcode {
+        display: block !important;
         height: 45px !important;
         max-width: 100% !important;
-        margin-top: auto !important; /* 把它推到卡片最底部 */
+        margin: 0 auto !important; /* 確保水平置中 */
+        /* 如果發現條碼跟文字太近，可以加上 margin-top: 5px; */
     }
+
 
     /* 6. 品保專屬設定 */
     /* 日期標題：獨立橫跨，不參與 4 欄排列 */
