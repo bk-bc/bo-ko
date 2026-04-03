@@ -79,24 +79,32 @@
         
         svg.barcode { width: 100%; max-height: 80px; }
 
-        /* 品保：單一兩欄佈局，螢幕與列印共用同一套 DOM */
-        .qa-print-container { display: none; }  /* 舊的列印版不用了 */
-        .qa-screen-container { display: block; } /* 舊的螢幕版不用了 */
+        /* 品保：單一DOM，每兩個群組一列並排 */
+        .qa-print-container { display: none; }
+        .qa-screen-container { display: block; }
 
-        /* 品保主容器：左右兩欄並排 */
+        /* 主容器：垂直堆疊每一列 */
         #qaResult {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 8px;
-            width: 100%;
-        }
-        .qa-col {
-            flex: 1 1 0;
-            min-width: 0;
             display: flex;
             flex-direction: column;
             gap: 6px;
+            width: 100%;
+        }
+
+        /* 每一列：兩個群組橫向並排 */
+        .qa-row {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            width: 100%;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        /* 群組外框包裝，各佔50% */
+        .qa-group-wrapper {
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         /* 每個日期群組 */
@@ -109,6 +117,7 @@
             page-break-inside: avoid;
             width: 100%;
             box-sizing: border-box;
+            height: 100%;
         }
         .qa-group-title {
             font-weight: bold;
@@ -117,6 +126,7 @@
             border-bottom: 1px solid #ccc;
             margin-bottom: 5px;
             padding-bottom: 3px;
+            overflow: hidden;
         }
 
         /* 群組內商品：兩小欄並排 */
@@ -151,7 +161,6 @@
             word-break: break-all;
             margin-bottom: 2px;
         }
-        /* 下架按鈕列 */
         .qa-item-actions {
             display: flex;
             justify-content: flex-end;
@@ -315,44 +324,64 @@
             }
 
             /* ══════════════════════════════════════════
-               品保列印：直接沿用螢幕兩欄佈局，不需切換
+               品保列印：直接沿用螢幕佈局
+               每列(qa-row)兩個群組並排，不會被切斷
                ══════════════════════════════════════════ */
             .qa-screen-container, .qa-print-container { display: none !important; }
 
             #qaResult {
                 display: flex !important;
-                flex-direction: row !important;
-                align-items: flex-start !important;
-                gap: 6px !important;
+                flex-direction: column !important;
+                gap: 4px !important;
                 width: 100% !important;
             }
-            .qa-col {
+
+            /* 每列不允許跨頁切斷 */
+            .qa-row {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 4px !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .qa-group-wrapper {
                 flex: 1 1 0 !important;
                 min-width: 0 !important;
             }
+
             .qa-group {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
                 border: 1pt solid #333 !important;
                 border-radius: 2px !important;
                 padding: 3px !important;
-                margin-bottom: 4px !important;
                 box-shadow: none !important;
-            }
-            .qa-item-card {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
+            }
+
+            .qa-group-title {
+                font-size: 10px !important;
+                padding-bottom: 2px !important;
+                margin-bottom: 3px !important;
+            }
+
+            .qa-item-card {
                 border: 0.5pt dashed #666 !important;
                 padding: 2px !important;
                 box-shadow: none !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
+
             .qa-item-title {
                 font-size: 14px !important;
             }
+
             .qa-item-actions { display: none !important; }
+
             .qa-item-card .barcode {
                 width: 95% !important;
-                height: 30px !important;
+                height: 28px !important;
                 display: block !important;
                 margin: 0 auto !important;
             }
@@ -930,7 +959,6 @@
         const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         const nextYearMonth = nextMonthDate.getFullYear() * 100 + (nextMonthDate.getMonth() + 1);
 
-        // 收集並排序日期群組
         const expMap = {};
         db.forEach(item => {
             if(item.Expiry) {
@@ -945,87 +973,94 @@
         const sortedDates = Object.keys(expMap).sort();
         if(sortedDates.length === 0) return;
 
-        // ── 建立左右兩欄容器 ──
-        const leftCol  = document.createElement('div');
-        leftCol.className  = 'qa-col';
-        const rightCol = document.createElement('div');
-        rightCol.className = 'qa-col';
-        resDiv.appendChild(leftCol);
-        resDiv.appendChild(rightCol);
+        // ── 每兩個群組組成一列（一行），並排顯示 ──
+        // 第1+2 → 第一列，第3+4 → 第二列，以此類推
+        for (let i = 0; i < sortedDates.length; i += 2) {
+            // 建立一個橫列容器，裝左右兩個群組
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'qa-row';
 
-        // ── 平均分配：前半進左欄、後半進右欄 ──
-        const half = Math.ceil(sortedDates.length / 2);
+            [0, 1].forEach(offset => {
+                const dateIdx = i + offset;
+                if (dateIdx >= sortedDates.length) {
+                    // 補一個空白佔位，讓左欄獨自一個時不會拉寬
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'qa-group-wrapper';
+                    rowDiv.appendChild(emptyDiv);
+                    return;
+                }
 
-        sortedDates.forEach((date, dateIdx) => {
-            const items = expMap[date];
-            const ym = parseInt(date.substring(0, 6));
-            let bgClass = '';
-            if (ym <= currentYearMonth)     bgClass = 'bg-month-current';
-            else if (ym === nextYearMonth)  bgClass = 'bg-month-next';
-            else                             bgClass = 'bg-month-future';
+                const date  = sortedDates[dateIdx];
+                const items = expMap[date];
+                const ym    = parseInt(date.substring(0, 6));
+                let bgClass = '';
+                if (ym <= currentYearMonth)    bgClass = 'bg-month-current';
+                else if (ym === nextYearMonth) bgClass = 'bg-month-next';
+                else                            bgClass = 'bg-month-future';
 
-            // 建立群組 div
-            const groupDiv = document.createElement('div');
-            groupDiv.className = `qa-group ${bgClass}`;
+                // 群組外框
+                const wrapDiv = document.createElement('div');
+                wrapDiv.className = 'qa-group-wrapper';
 
-            // 群組標題
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'qa-group-title';
-            titleDiv.innerHTML = `
-                <span>到期日: ${date}</span>
-                <button class="btn-danger no-print" style="float:right; padding:1px 6px; font-size:11px;" onclick="removeQA('${date}')">全批下架</button>
-            `;
-            groupDiv.appendChild(titleDiv);
+                const groupDiv = document.createElement('div');
+                groupDiv.className = `qa-group ${bgClass}`;
 
-            // 商品內層兩小欄
-            const itemsRow = document.createElement('div');
-            itemsRow.className = 'qa-items-row';
+                // 標題列
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'qa-group-title';
+                titleDiv.innerHTML = `
+                    <span>到期日: ${date}</span>
+                    <button class="btn-danger no-print" style="float:right; padding:1px 6px; font-size:11px; margin-top:-2px;" onclick="removeQA('${date}')">全批下架</button>
+                `;
+                groupDiv.appendChild(titleDiv);
 
-            const itemHalf   = Math.ceil(items.length / 2);
-            const leftItems  = items.slice(0, itemHalf);
-            const rightItems = items.slice(itemHalf);
+                // 商品內層：兩小欄並排
+                const itemsRow = document.createElement('div');
+                itemsRow.className = 'qa-items-row';
 
-            [leftItems, rightItems].forEach((colItems) => {
-                const col = document.createElement('div');
-                col.className = 'qa-items-col';
-                colItems.forEach((item, idx) => {
-                    const isLeft = colItems === leftItems;
-                    const svgId = `qa_${date}_${isLeft ? 'L' : 'R'}${idx}`;
-                    const card = document.createElement('div');
-                    card.className = 'qa-item-card';
-                    card.innerHTML = `
-                        <div class="qa-item-actions no-print">
-                            <button class="btn-warning" style="padding:1px 6px; font-size:11px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
-                        </div>
-                        <div class="qa-item-title">${item.Name}</div>
-                        ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                    `;
-                    col.appendChild(card);
+                const itemHalf   = Math.ceil(items.length / 2);
+                const leftItems  = items.slice(0, itemHalf);
+                const rightItems = items.slice(itemHalf);
+
+                [leftItems, rightItems].forEach((colItems, colIdx) => {
+                    const col = document.createElement('div');
+                    col.className = 'qa-items-col';
+                    colItems.forEach((item, idx) => {
+                        const side  = colIdx === 0 ? 'L' : 'R';
+                        const svgId = `qa_${dateIdx}_${side}${idx}`;
+                        const card  = document.createElement('div');
+                        card.className = 'qa-item-card';
+                        card.innerHTML = `
+                            <div class="qa-item-actions no-print">
+                                <button class="btn-warning" style="padding:1px 6px; font-size:11px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                            </div>
+                            <div class="qa-item-title">${item.Name}</div>
+                            ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                        `;
+                        col.appendChild(card);
+                    });
+                    itemsRow.appendChild(col);
                 });
-                itemsRow.appendChild(col);
+
+                groupDiv.appendChild(itemsRow);
+                wrapDiv.appendChild(groupDiv);
+                rowDiv.appendChild(wrapDiv);
+
+                // 渲染條碼
+                if(showBc) {
+                    leftItems.forEach((item, idx) => {
+                        try { renderBarcode(`qa_${dateIdx}_L${idx}`, item.ID, item.Type); } catch(e) {}
+                    });
+                    rightItems.forEach((item, idx) => {
+                        try { renderBarcode(`qa_${dateIdx}_R${idx}`, item.ID, item.Type); } catch(e) {}
+                    });
+                }
             });
 
-            groupDiv.appendChild(itemsRow);
+            resDiv.appendChild(rowDiv);
+        }
 
-            // 前半進左欄，後半進右欄
-            if (dateIdx < half) {
-                leftCol.appendChild(groupDiv);
-            } else {
-                rightCol.appendChild(groupDiv);
-            }
-
-            // 渲染條碼
-            if(showBc) {
-                leftItems.forEach((item, idx) => {
-                    try { renderBarcode(`qa_${date}_L${idx}`, item.ID, item.Type); } catch(e) {}
-                });
-                rightItems.forEach((item, idx) => {
-                    try { renderBarcode(`qa_${date}_R${idx}`, item.ID, item.Type); } catch(e) {}
-                });
-            }
-        });
-
-        // 移除舊的 beforeprint/afterprint 監聽
+        // 清除舊的 print 監聽
         if(window._qaPrintHandler) {
             window.removeEventListener('beforeprint', window._qaPrintHandler);
             window.removeEventListener('afterprint',  window._qaAfterHandler);
