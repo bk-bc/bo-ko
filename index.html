@@ -85,171 +85,69 @@
 .bg-month-next    { background-color: #ffe5b4 !important; } /* 淺橘 */
 .bg-month-future  { background-color: #ffffcc !important; } /* 淺黃 */
 @media print {
-    /* --- 1. 基礎強制設定 --- */
-    @page { size: A4; margin: 5mm; } /* 邊距再縮小，榨出更多空間 */
-
+    /* 基礎列印設定 */
+    @page { size: A4; margin: 5mm; }
+    
     html, body {
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        background: white !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        background: white !important;
     }
 
-    header, .no-print, button, .nav-buttons, .card-actions, input {
+    /* 隱藏網頁操作介面 */
+    header, .no-print, button, input {
         display: none !important;
     }
 
-    /* 🔥 隱藏 C1 與 Event 等次要資訊 🔥 */
-    #search.active .card-sub, #qa.active .card-sub {
+    /* 隱藏不想印出來的卡片資訊 (C1, Event 等) */
+    .card-sub, .card-c1, .card-event {
         display: none !important;
     }
 
-
-
-    /* --- 1. 搜尋頁面：強制直列式 4 欄位 (加固版) --- */
-    #search.active #searchResult {
-        display: block !important;
-        width: 100% !important;
-        /* 強制啟動 WebKit 分欄引擎 */
-        -webkit-column-count: 4 !important;
-        column-count: 4 !important;
-        -webkit-column-gap: 8px !important;
-        column-gap: 8px !important;
-        -webkit-column-fill: auto !important; /* 關鍵：確保 1->2->3->4 垂直流向 */
-        column-fill: auto !important;
-        orphans: 1 !important;
-        widows: 1 !important;
-    }
-
-    #search.active .card {
-        /* 必須使用 inline-block 或 block，並配合 break-inside 防止卡片被砍斷 */
-        display: block !important; 
-        width: 100% !important;
-        -webkit-column-break-inside: avoid !important; /* 舊版 WebKit 相容 */
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        
-        /* 空間壓縮調整 */
-        margin: 0 0 8px 0 !important; /* 增加底部間距避免黏在一起 */
-        padding: 4px !important;
-        height: 75px !important; /* 你要求的極致高度 */
-        border: 1px solid #999 !important;
-        box-sizing: border-box !important;
-        text-align: center !important;
-        position: relative !important;
-    }
-
-    /* 🔥 移除搜尋頁面的 C1 與 Event 🔥 */
-    #search.active .card-event, 
-    #search.active .card-c1,
-    #search.active .card-sub {
-        display: none !important;
-    }
-
-    /* --- 2. 搜尋頁面內的條碼與標題優化 --- */
-    #search.active .card-title {
-        font-size: 11px !important;
-        line-height: 1.1 !important;
-        max-height: 2.2em !important;
-        margin: 0 0 2px 0 !important;
-        overflow: hidden !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
-    }
-
-    #search.active .card svg.barcode {
-        width: 95% !important;
-        height: 38px !important; /* 條碼高度 */
-        margin: 0 auto !important;
-        display: block !important;
-        /* 確保條碼貼近底部 */
-        position: absolute !important;
-        bottom: 4px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
+    /* 卡片高度極致壓縮 (套用在你生成的卡片實體上) */
+    .search-grid-container .card { height: 75px !important; }
+    .qa-items-container .card { height: 70px !important; }
     
+    .card svg.barcode { margin: 0 auto !important; }
+    
+    /* 你提到的列印群組細線分隔提示 (可用在卡片或群組底部) */
+    .qa-group {
+        border-bottom: 1px solid #999 !important;
+    }
 }
 
 
-    /* --- 3. 品保頁面：外 Flex + 內 Grid (絕對防爆寫法) --- */
-    #qa.active .print-container { display: block !important; width: 100% !important; }
+/* --- 搜尋網格基礎與手機直排 (第一組排到第四組向下延伸) --- */
+.search-grid-container {
+    display: grid;
+    grid-template-columns: 1fr; /* 預設手機：單欄垂直 */
+    gap: 10px;
+    width: 100%;
+}
 
-    /* 外層：到期日群組 (使用 Flexbox 避免嵌套導致 iOS 崩潰) */
-    #qa.active #qaResult {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: space-between !important;
-        width: 100% !important;
-        gap: 6px !important;
+/* 確保行內元素由上往下排 */
+.search-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* 名片之間的上下距離 */
+}
+
+/* --- 寬螢幕手機 (橫向或大螢幕)：兩欄排列 --- */
+@media (min-width: 600px) {
+    .search-grid-container {
+        grid-template-columns: 1fr 1fr; /* 1|2, 下方 3|4 */
     }
+}
 
-    #qa.active .qa-group {
-        width: calc(50% - 4px) !important; /* 精確半版 */
-        margin-bottom: 6px !important;
-        padding: 4px !important;
-        border: 2px solid #333 !important;
-        border-radius: 6px !important;
-        box-sizing: border-box !important;
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+/* --- 平板/桌上型/列印模式：四欄並排 --- */
+@media (min-width: 900px), print {
+    .search-grid-container {
+        grid-template-columns: repeat(4, 1fr); /* 1|2|3|4 完美呈現 */
+        gap: 8px; /* 列印時的欄位間距 */
     }
-
-    #qa.active .qa-group-title {
-        width: 100% !important;
-        font-weight: bold !important;
-        font-size: 13px !important;
-        text-align: center !important;
-        border-bottom: 2px solid #333 !important;
-        margin-bottom: 4px !important;
-        padding-bottom: 2px !important;
-    }
-
-    /* 內層：單品小名片 (改用 Grid 網格強制切兩欄，iOS 最吃這一套) */
-    #qa.active .qa-items-container {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important; /* 強制均分兩欄 */
-        gap: 4px !important;
-        width: 100% !important;
-    }
-
-    #qa.active .qa-group .card {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 2px !important;
-        height: 70px !important; /* 🔥 品保單品再壓扁 */
-        border: 1px dashed #666 !important;
-        box-sizing: border-box !important;
-        text-align: center !important;
-    }
-
-
-    /* --- 4. 共用文字與條碼極致壓縮 --- */
-    .card-title {
-        font-size: 11px !important;
-        line-height: 1.1 !important;
-        height: 2.2em !important;
-        margin: 0 0 2px 0 !important; /* 讓品名緊貼條碼 */
-        overflow: hidden !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
-        word-break: break-all !important; /* 防止長英文單字撐破版面 */
-    }
-
-    .card svg.barcode {
-        width: 95% !important;
-        height: 38px !important; /* 縮減條碼高度 */
-        margin: 0 auto !important; /* 🔥 消除留白，直接貼合名片底部 */
-        display: block !important;
-    }
-
-    /* 背景顏色保留 */
-    .bg-month-current { background-color: #ffcccc !important; }
-    .bg-month-next    { background-color: #ffe5b4 !important; }
-    .bg-month-future  { background-color: #ffffcc !important; }
 }
 
 @media (max-width: 350px) {
@@ -257,6 +155,53 @@
         /* 只有在寬度小於 350px (極小螢幕) 時才變回單排 */
         grid-template-columns: 1fr !important;
     }
+}
+/* --- 品保外層佈局 (按日期分組) --- */
+#qaResult {
+    display: grid;
+    grid-template-columns: 1fr; /* 手機版：一個日期群組佔滿一列 */
+    gap: 10px;
+    width: 100%;
+}
+
+/* 平板/桌機/列印模式：日期群組兩倍排列 (1|2, 3|4) */
+@media (min-width: 900px), print {
+    #qaResult {
+        grid-template-columns: 1fr 1fr; 
+    }
+}
+
+/* 單個日期群組的框線設計 */
+.qa-group {
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 6px;
+    background: #fff;
+    /* 列印極度重要：防斷行 */
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* 到期日標題 */
+.qa-group-title {
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+}
+
+/* --- 品保內層商品佈局 (強制 2 排) --- */
+.qa-items-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 無論手機還是列印，一律雙排顯示 */
+    gap: 4px;
+}
+
+.qa-items-container .card {
+    border: 1px dashed #666;
+    padding: 4px;
+    text-align: center;
 }
 
         
@@ -693,100 +638,109 @@ function upsertItem(newItem) {
         renderSearch();
     }
 
-    function renderSearch() {
-        const isFresh = document.getElementById('freshFoodCheck').checked;
-        const c1 = document.getElementById('searchC1').value;
-        const ev = document.getElementById('searchEvent').value;
-        const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
-        const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
-        const resDiv = document.getElementById('searchResult');
-        const searchFilters = document.getElementById('searchFilters');
-    // 插入這行：取得快捷鍵的開關狀態
+function renderSearch() {
+    const isFresh = document.getElementById('freshFoodCheck').checked;
+    const c1 = document.getElementById('searchC1').value;
+    const ev = document.getElementById('searchEvent').value;
+    const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
+    const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
+    const resDiv = document.getElementById('searchResult');
+    const searchFilters = document.getElementById('searchFilters');
     const showShortcuts = document.getElementById('shortcutToggle').checked;
-        resDiv.innerHTML = '';
-        
-    if (isFresh) {
-        // 鮮食模式：隱藏下拉選單與第二個框，只留第一個關鍵字輸入框
-        document.getElementById('searchC1').style.display = 'none';
-        document.getElementById('searchEvent').style.display = 'none';
-        document.getElementById('searchKeyword2').style.display = 'none';
-        searchFilters.style.display = 'block'; // 確保容器是開啟的
+    
+    resDiv.innerHTML = '';
+    
+    if (isFresh) {
+        document.getElementById('searchC1').style.display = 'none';
+        document.getElementById('searchEvent').style.display = 'none';
+        document.getElementById('searchKeyword2').style.display = 'none';
+        searchFilters.style.display = 'block';
 
-        if (kw1.length < 1) {
-            document.getElementById('searchCount').innerText = '請輸入鮮食名稱進行搜尋...';
-            return;
-        }
-    } else {
-        // 一般模式：全部恢復顯示
-        document.getElementById('searchC1').style.display = 'block';
-        document.getElementById('searchEvent').style.display = 'block';
-        document.getElementById('searchKeyword2').style.display = 'block';
-        searchFilters.style.display = 'block';
-
-        if (kw1.length < 1 && kw2.length < 1 && !c1 && !ev) {
-            document.getElementById('searchCount').innerText = '輸入關鍵字或選擇篩選項目...';
-            return;
-        }
-    }
-
-
-        let filtered = db.filter(item => {
-            if (isFresh) {
-                if (item.Type !== 'I24' && item.Type !== 'I35') return false;
-                const match1 = kw1 ? item.Name.toLowerCase().includes(kw1) : true;
-                const match2 = kw2 ? item.Name.toLowerCase().includes(kw2) : true;
-                return (kw1 || kw2) && match1 && match2;
-            } else {
-                if (c1 && item.C1 !== c1) return false;
-                                if (ev && !item.Event.split('/').some(e => e.replace(/_\d{3}$/, '') === ev)) return false;
-                
-                let textMatch = (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
-                                (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
-                return textMatch;
-            }
-        });
-
-        // 🔥 新增：如果使用者有選擇 Event 篩選，則根據隱藏序號進行排序
-        if (ev && !isFresh) {
-            filtered.sort((a, b) => {
-                // 找出 a 跟 b 身上屬於該活動的完整字串 (例如：20260701_中元_005)
-                const evA = a.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
-                const evB = b.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
-                
-                // 提取最後的 3 位數字，若沒匹配到則預設為 999 (放最後面)
-                const seqA = evA.match(/_(\d{3})$/) ? parseInt(evA.match(/_(\d{3})$/)[1], 10) : 999;
-                const seqB = evB.match(/_(\d{3})$/) ? parseInt(evB.match(/_(\d{3})$/)[1], 10) : 999;
-                
-                return seqA - seqB; // 升冪排序
-            });
+        if (kw1.length < 1) {
+            document.getElementById('searchCount').innerText = '請輸入鮮食名稱進行搜尋...';
+            return;
         }
-        
+    } else {
+        document.getElementById('searchC1').style.display = 'block';
+        document.getElementById('searchEvent').style.display = 'block';
+        document.getElementById('searchKeyword2').style.display = 'block';
+        searchFilters.style.display = 'block';
 
-        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 50 ? '50+' : filtered.length} (顯示上限50筆)`;
-        filtered = filtered.slice(0, 50);
+        if (kw1.length < 1 && kw2.length < 1 && !c1 && !ev) {
+            document.getElementById('searchCount').innerText = '輸入關鍵字或選擇篩選項目...';
+            return;
+        }
+    }
 
-        filtered.forEach((item, idx) => {
+    let filtered = db.filter(item => {
+        if (isFresh) {
+            if (item.Type !== 'I24' && item.Type !== 'I35') return false;
+            const match1 = kw1 ? item.Name.toLowerCase().includes(kw1) : true;
+            const match2 = kw2 ? item.Name.toLowerCase().includes(kw2) : true;
+            return (kw1 || kw2) && match1 && match2;
+        } else {
+            if (c1 && item.C1 !== c1) return false;
+            if (ev && !item.Event.split('/').some(e => e.replace(/_\d{3}$/, '') === ev)) return false;
+            
+            let textMatch = (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
+                            (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
+            return textMatch;
+        }
+    });
+
+    if (ev && !isFresh) {
+        filtered.sort((a, b) => {
+            const evA = a.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
+            const evB = b.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
+            const seqA = evA.match(/_(\d{3})$/) ? parseInt(evA.match(/_(\d{3})$/)[1], 10) : 999;
+            const seqB = evB.match(/_(\d{3})$/) ? parseInt(evB.match(/_(\d{3})$/)[1], 10) : 999;
+            return seqA - seqB;
+        });
+    }
+
+    // 更新顯示數量上限為 52
+    document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 52 ? '52+' : filtered.length} (顯示上限52筆)`;
+    filtered = filtered.slice(0, 52);
+
+    // 🔥 建立 RWD 網格容器
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'search-grid-container';
+    resDiv.appendChild(gridContainer);
+
+    // 🔥 分成四組，每組 13 個 (達成 1->2->3->4 直列排序)
+    for (let i = 0; i < 4; i++) {
+        const chunk = filtered.slice(i * 13, (i + 1) * 13);
+        if (chunk.length === 0 && i > 0) break;
+
+        const columnDiv = document.createElement('div');
+        columnDiv.className = 'search-column';
+        gridContainer.appendChild(columnDiv);
+
+        chunk.forEach((item, chunkIdx) => {
+            const globalIdx = (i * 13) + chunkIdx; // 確保 ID 唯一
             const card = document.createElement('div');
             card.className = 'card';
+            
             if (isFresh) {
                 card.innerHTML = `
                     <div class="card-title">${item.Name} (${item.Type})</div>
-                    <div class="card-actions">
-                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${idx}')">今日到期</button>
-                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${idx}')">明日到期</button>
+                    <div class="card-actions no-print">
+                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${globalIdx}')">今日到期</button>
+                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${globalIdx}')">明日到期</button>
                         ${item.Type === 'I35' ? `
-                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${idx}')">一配</button>
-                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${idx}')">二配</button>
+                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${globalIdx}')">一配</button>
+                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${globalIdx}')">二配</button>
                         ` : ''}
                     </div>
-                    <div style="text-align:center; margin-top:10px;"><svg id="bc_${idx}" class="barcode"></svg></div>
+                    <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
                 `;
-            } else {const hideNormalShortcuts = !isFresh && !showShortcuts;
+            } else {
+                const hideNormalShortcuts = !isFresh && !showShortcuts;
                 card.innerHTML = `
                     <div class="card-title">${item.Name}</div>
                     <div class="card-sub">${item.C1} | ${item.Event}</div>
-                    <div style="text-align:center;"><svg id="bc_${idx}" class="barcode"></svg></div>
-                        <div class="card-actions" style="display: ${hideNormalShortcuts ? 'none' : 'flex'};">
+                    <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
+                    <div class="card-actions no-print" style="display: ${hideNormalShortcuts ? 'none' : 'flex'};">
                         <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
                         <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
                         <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
@@ -795,54 +749,11 @@ function upsertItem(newItem) {
                     </div>
                 `;
             }
-            resDiv.appendChild(card);
-            if (!isFresh) renderBarcode(`bc_${idx}`, item.ID, item.Type);
+            columnDiv.appendChild(card);
+            if (!isFresh) renderBarcode(`bc_${globalIdx}`, item.ID, item.Type);
         });
     }
-
-    function showFreshBarcode(id, type, dayOffset, deliveryCode, svgId) {
-        // ID (pad/trim to 8) + Julian (3) + Delivery (1) = 12 digits
-        let baseId = id.padEnd(8, '0').substring(0, 8);
-        let julian = getJulian(dayOffset);
-        let code12 = baseId + julian + deliveryCode;
-        renderBarcode(svgId, code12, 'EAN13'); // JsBarcode will auto-calculate check digit for 12 digits
-    }
-
-    function actionCard(id, action) {
-        let items = db.filter(i => i.ID === id);
-        if(!items.length) return;
-        let mainItem = items[0]; // Simplified for now, applied to first match
-
-        if (action === 'reclassify') {
-            mainItem.C1 = '未分類';
-        } else if (action === 'qa') {
-        // 改用隱藏的 date input 觸發原生月曆
-        const datePicker = document.getElementById('hiddenDatePicker');
-        
-        // 監聽日期變更事件
-        datePicker.onchange = function() {
-            if (this.value) {
-                // 將 yyyy-mm-dd 轉換為 yyyymmdd
-                const formattedDate = this.value.replace(/-/g, '');
-                mainItem.Expiry = cleanArrayStr(`${mainItem.Expiry}/${formattedDate}`, true);
-                saveData();
-                renderSearch();
-                this.value = ''; // 清空以利下次選取
-            }
-        };
-        
-        // 觸發點擊，彈出手機/電腦系統內建的月曆
-        datePicker.showPicker(); 
-        }  else if (action === 'order') {
-            mainItem.Event = cleanArrayStr(`${mainItem.Event}/待訂貨`, false);
-        } else if (action === 'delete') {
-            if(confirm('確認刪除？')) db = db.filter(i => i.ID !== id);
-        } else if (action === 'lock') {
-            mainItem.Locked = mainItem.Locked === 'True' ? 'False' : 'True';
-        }
-        saveData(); renderSearch();
-    }
-
+}
     // --- 3. 勘誤頁面 ---
     function renderError() {
         const idGroups = {};
