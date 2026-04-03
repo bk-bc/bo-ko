@@ -843,6 +843,29 @@
         }
     }
 
+    function showFreshBarcode(id, type, addDays, copies, svgId) {
+        // I35 格式：原始ID + 3位Julian日 + 1位份數
+        // I24 格式：原始ID + 4位MMDD
+        const d = new Date();
+        d.setDate(d.getDate() + addDays);
+
+        let barcodeValue = id;
+        if (type === 'I35') {
+            const julian = getJulian(addDays);
+            barcodeValue = id + julian + copies;
+        } else if (type === 'I24') {
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            barcodeValue = id + mm + dd;
+        }
+        try {
+            JsBarcode(`#${svgId}`, barcodeValue, {
+                format: 'CODE128',
+                displayValue: true, height: 35, margin: 0, width: 1.5
+            });
+        } catch(e) { console.error('Fresh barcode error:', e); }
+    }
+
     function actionCard(id, action) {
         let item = db.find(i => i.ID === id);
         if (!item) return;
@@ -1045,19 +1068,26 @@
                 groupDiv.appendChild(itemsRow);
                 wrapDiv.appendChild(groupDiv);
                 rowDiv.appendChild(wrapDiv);
-
-                // 渲染條碼
-                if(showBc) {
-                    leftItems.forEach((item, idx) => {
-                        try { renderBarcode(`qa_${dateIdx}_L${idx}`, item.ID, item.Type); } catch(e) {}
-                    });
-                    rightItems.forEach((item, idx) => {
-                        try { renderBarcode(`qa_${dateIdx}_R${idx}`, item.ID, item.Type); } catch(e) {}
-                    });
-                }
+                // 條碼暫不在這裡渲染，等 rowDiv 掛上 DOM 後統一處理
             });
 
-            resDiv.appendChild(rowDiv);
+            resDiv.appendChild(rowDiv); // ← 先掛上 DOM
+
+            // ── 掛上 DOM 之後才渲染條碼，SVG 元素此時已存在 ──
+            if(showBc) {
+                [0, 1].forEach(offset => {
+                    const dateIdx = i + offset;
+                    if (dateIdx >= sortedDates.length) return;
+                    const items = expMap[sortedDates[dateIdx]];
+                    const itemHalf   = Math.ceil(items.length / 2);
+                    items.slice(0, itemHalf).forEach((item, idx) => {
+                        try { renderBarcode(`qa_${dateIdx}_L${idx}`, item.ID, item.Type); } catch(e) {}
+                    });
+                    items.slice(itemHalf).forEach((item, idx) => {
+                        try { renderBarcode(`qa_${dateIdx}_R${idx}`, item.ID, item.Type); } catch(e) {}
+                    });
+                });
+            }
         }
 
         // 清除舊的 print 監聽
