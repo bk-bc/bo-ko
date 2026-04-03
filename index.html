@@ -79,9 +79,84 @@
         
         svg.barcode { width: 100%; max-height: 80px; }
 
-        /* 品保：列印版預設隱藏，只在列印時顯示 */
-        .qa-print-container { display: none !important; }
-        .qa-screen-container { display: block; }
+        /* 品保：單一兩欄佈局，螢幕與列印共用同一套 DOM */
+        .qa-print-container { display: none; }  /* 舊的列印版不用了 */
+        .qa-screen-container { display: block; } /* 舊的螢幕版不用了 */
+
+        /* 品保主容器：左右兩欄並排 */
+        #qaResult {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 8px;
+            width: 100%;
+        }
+        .qa-col {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* 每個日期群組 */
+        .qa-group {
+            border: 2px solid #333;
+            border-radius: 6px;
+            padding: 6px;
+            background: #fff;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .qa-group-title {
+            font-weight: bold;
+            font-size: 0.9em;
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+        }
+
+        /* 群組內商品：兩小欄並排 */
+        .qa-items-row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 4px;
+        }
+        .qa-items-col {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        /* 商品卡片 */
+        .qa-item-card {
+            border: 1px dashed #999;
+            border-radius: 3px;
+            padding: 4px;
+            text-align: center;
+            background: rgba(255,255,255,0.8);
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .qa-item-title {
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1.25;
+            word-break: break-all;
+            margin-bottom: 2px;
+        }
+        /* 下架按鈕列 */
+        .qa-item-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 3px;
+        }
 
         /* 品保三色 */
         .bg-month-current { background-color: #ffe6e6 !important; }
@@ -240,84 +315,44 @@
             }
 
             /* ══════════════════════════════════════════
-               品保列印
-               • 第一層：日期群組做報紙分欄（左欄流滿跳右欄）
-               • 第二層：每個群組內的商品再做報紙分欄
-               • 文字 300%
-               • 群組與商品卡片都不被切斷
+               品保列印：直接沿用螢幕兩欄佈局，不需切換
                ══════════════════════════════════════════ */
+            .qa-screen-container, .qa-print-container { display: none !important; }
 
-            /* 螢幕版在列印時隱藏 */
-            .qa-screen-container { display: none !important; }
-
-            /* 列印版：外層兩欄 flexbox 並排（iOS/Android 通用）*/
-            .qa-print-container {
+            #qaResult {
                 display: flex !important;
                 flex-direction: row !important;
                 align-items: flex-start !important;
-                width: 100% !important;
                 gap: 6px !important;
-            }
-            .qa-print-col {
-                flex: 0 0 calc(50% - 3px) !important;
-                max-width: calc(50% - 3px) !important;
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 5px !important;
-            }
-
-            /* 每個日期群組 */
-            .qa-print-group {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-                border: 1.5pt solid #333 !important;
-                border-radius: 3px !important;
-                padding: 4px !important;
-                background: #fff !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-            }
-
-            /* 群組內商品：內層兩小欄 flexbox 並排 */
-            .qa-print-items-row {
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: flex-start !important;
-                gap: 3px !important;
                 width: 100% !important;
             }
-            .qa-print-items-col {
+            .qa-col {
                 flex: 1 1 0 !important;
                 min-width: 0 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 3px !important;
             }
-
-            /* 商品卡片 */
-            .qa-print-card {
+            .qa-group {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                border: 1pt solid #333 !important;
+                border-radius: 2px !important;
+                padding: 3px !important;
+                margin-bottom: 4px !important;
+                box-shadow: none !important;
+            }
+            .qa-item-card {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
                 border: 0.5pt dashed #666 !important;
-                padding: 3px !important;
-                text-align: center !important;
-                box-sizing: border-box !important;
-                width: 100% !important;
+                padding: 2px !important;
+                box-shadow: none !important;
             }
-
-            /* 文字固定 14px（iOS/Android 一致） */
-            .qa-print-title {
+            .qa-item-title {
                 font-size: 14px !important;
-                font-weight: bold !important;
-                line-height: 1.2 !important;
-                word-break: break-all !important;
-                white-space: normal !important;
-                margin: 0 0 3px 0 !important;
             }
-
-            .qa-print-card .barcode {
+            .qa-item-actions { display: none !important; }
+            .qa-item-card .barcode {
                 width: 95% !important;
-                height: 32px !important;
+                height: 30px !important;
                 display: block !important;
                 margin: 0 auto !important;
             }
@@ -908,165 +943,95 @@
             }
         });
         const sortedDates = Object.keys(expMap).sort();
+        if(sortedDates.length === 0) return;
 
-        // ── 螢幕版容器（列印時隱藏）──
-        const screenContainer = document.createElement('div');
-        screenContainer.className = 'qa-screen-container';
-        resDiv.appendChild(screenContainer);
+        // ── 建立左右兩欄容器 ──
+        const leftCol  = document.createElement('div');
+        leftCol.className  = 'qa-col';
+        const rightCol = document.createElement('div');
+        rightCol.className = 'qa-col';
+        resDiv.appendChild(leftCol);
+        resDiv.appendChild(rightCol);
 
-        // ── 列印版容器（螢幕時隱藏）：左右兩欄並排 ──
-        const printContainer = document.createElement('div');
-        printContainer.className = 'qa-print-container';
-        const printLeft  = document.createElement('div');
-        printLeft.className  = 'qa-print-col';
-        const printRight = document.createElement('div');
-        printRight.className = 'qa-print-col';
-        printContainer.appendChild(printLeft);
-        printContainer.appendChild(printRight);
-        resDiv.appendChild(printContainer);
-
-        // ── 所有列印版群組先存起來，等 beforeprint 再動態分配欄位 ──
-        const printGroups = [];
+        // ── 平均分配：前半進左欄、後半進右欄 ──
+        const half = Math.ceil(sortedDates.length / 2);
 
         sortedDates.forEach((date, dateIdx) => {
             const items = expMap[date];
             const ym = parseInt(date.substring(0, 6));
             let bgClass = '';
-            if (ym <= currentYearMonth)      bgClass = 'bg-month-current';
-            else if (ym === nextYearMonth)   bgClass = 'bg-month-next';
-            else                              bgClass = 'bg-month-future';
+            if (ym <= currentYearMonth)     bgClass = 'bg-month-current';
+            else if (ym === nextYearMonth)  bgClass = 'bg-month-next';
+            else                             bgClass = 'bg-month-future';
 
-            // ── 螢幕版群組 ──
-            const screenGroup = document.createElement('div');
-            screenGroup.className = `qa-group ${bgClass}`;
-            screenGroup.style.cssText = 'padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #ddd;';
-            let screenHtml = `
-                <div class="qa-group-title flex-row" style="margin-bottom:10px; border-bottom:2px solid #333; padding-bottom:5px;">
-                    <span style="font-weight:bold; font-size:1.1em;">到期日: ${date}</span>
-                    <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
-                </div>
-                <div class="qa-items-container">
+            // 建立群組 div
+            const groupDiv = document.createElement('div');
+            groupDiv.className = `qa-group ${bgClass}`;
+
+            // 群組標題
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'qa-group-title';
+            titleDiv.innerHTML = `
+                <span>到期日: ${date}</span>
+                <button class="btn-danger no-print" style="float:right; padding:1px 6px; font-size:11px;" onclick="removeQA('${date}')">全批下架</button>
             `;
-            items.forEach((item, idx) => {
-                const svgId = `qa_s_${date}_${idx}`;
-                screenHtml += `
-                    <div class="card" style="background:rgba(255,255,255,0.7); margin-bottom:8px;">
-                        <div class="flex-row no-print" style="margin-bottom:5px;">
-                            <span style="flex:1;"></span>
-                            <button class="btn-warning" style="flex:0; padding:2px 8px; font-size:12px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
-                        </div>
-                        <div class="card-title">${item.Name}</div>
-                        ${showBc ? `<div style="text-align:center; width:100%;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                    </div>
-                `;
-            });
-            screenHtml += `</div>`;
-            screenGroup.innerHTML = screenHtml;
-            screenContainer.appendChild(screenGroup);
+            groupDiv.appendChild(titleDiv);
 
-            // ── 列印版群組：商品預先分左右兩小欄 ──
-            const printGroup = document.createElement('div');
-            printGroup.className = `qa-print-group ${bgClass}`;
+            // 商品內層兩小欄
+            const itemsRow = document.createElement('div');
+            itemsRow.className = 'qa-items-row';
 
             const itemHalf   = Math.ceil(items.length / 2);
             const leftItems  = items.slice(0, itemHalf);
             const rightItems = items.slice(itemHalf);
 
-            let printHtml = `
-                <div class="qa-group-title" style="border-bottom:1pt solid #333; margin-bottom:3px; padding-bottom:2px; font-weight:bold; font-size:11px; text-align:center;">
-                    到期日: ${date}
-                </div>
-                <div class="qa-print-items-row">
-                    <div class="qa-print-items-col">
-            `;
-            leftItems.forEach((item, idx) => {
-                const svgId = `qa_p_${date}_L${idx}`;
-                printHtml += `
-                    <div class="qa-print-card">
-                        <div class="qa-print-title">${item.Name}</div>
-                        ${showBc ? `<div style="text-align:center;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                    </div>
-                `;
+            [leftItems, rightItems].forEach((colItems) => {
+                const col = document.createElement('div');
+                col.className = 'qa-items-col';
+                colItems.forEach((item, idx) => {
+                    const isLeft = colItems === leftItems;
+                    const svgId = `qa_${date}_${isLeft ? 'L' : 'R'}${idx}`;
+                    const card = document.createElement('div');
+                    card.className = 'qa-item-card';
+                    card.innerHTML = `
+                        <div class="qa-item-actions no-print">
+                            <button class="btn-warning" style="padding:1px 6px; font-size:11px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                        </div>
+                        <div class="qa-item-title">${item.Name}</div>
+                        ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                    `;
+                    col.appendChild(card);
+                });
+                itemsRow.appendChild(col);
             });
-            printHtml += `</div><div class="qa-print-items-col">`;
-            rightItems.forEach((item, idx) => {
-                const svgId = `qa_p_${date}_R${idx}`;
-                printHtml += `
-                    <div class="qa-print-card">
-                        <div class="qa-print-title">${item.Name}</div>
-                        ${showBc ? `<div style="text-align:center;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                    </div>
-                `;
-            });
-            printHtml += `</div></div>`;
-            printGroup.innerHTML = printHtml;
-            printGroups.push(printGroup); // 先存起來，不急著放進欄位
 
-            // 渲染螢幕版條碼
+            groupDiv.appendChild(itemsRow);
+
+            // 前半進左欄，後半進右欄
+            if (dateIdx < half) {
+                leftCol.appendChild(groupDiv);
+            } else {
+                rightCol.appendChild(groupDiv);
+            }
+
+            // 渲染條碼
             if(showBc) {
-                items.forEach((item, idx) => {
-                    renderBarcode(`qa_s_${date}_${idx}`, item.ID, item.Type);
+                leftItems.forEach((item, idx) => {
+                    try { renderBarcode(`qa_${date}_L${idx}`, item.ID, item.Type); } catch(e) {}
+                });
+                rightItems.forEach((item, idx) => {
+                    try { renderBarcode(`qa_${date}_R${idx}`, item.ID, item.Type); } catch(e) {}
                 });
             }
         });
 
-        // ── 先把所有列印群組都放進左欄（隱藏狀態），讓瀏覽器計算高度 ──
-        printGroups.forEach(g => printLeft.appendChild(g));
-
-        // ── beforeprint：量測每個群組的實際高度，動態決定左右分配 ──
-        // iOS/Android 列印前都會觸發此事件
-        function doBeforePrint() {
-            // 先顯示列印容器，讓瀏覽器能量測高度
-            printContainer.style.display = 'flex';
-            printLeft.innerHTML  = '';
-            printRight.innerHTML = '';
-
-            // A4 可用高約 257mm → 轉 px（1mm ≈ 3.7795px）
-            const pageHeightPx = 257 * 3.7795;
-            let leftH = 0, rightH = 0;
-
-            printGroups.forEach(g => {
-                // 暫時放進左欄量高度
-                printLeft.appendChild(g);
-                const h = g.offsetHeight + 5; // +5 為 gap
-
-                if (leftH <= rightH || leftH + h <= pageHeightPx) {
-                    // 左欄還裝得下，或左欄比右欄矮 → 放左欄
-                    leftH += h;
-                } else {
-                    // 左欄超過或比右欄高 → 移到右欄
-                    printLeft.removeChild(g);
-                    printRight.appendChild(g);
-                    rightH += h;
-                }
-            });
-
-            // 渲染列印版條碼
-            if(showBc) {
-                sortedDates.forEach(date => {
-                    const items = expMap[date];
-                    const itemHalf = Math.ceil(items.length / 2);
-                    items.slice(0, itemHalf).forEach((item, idx) => {
-                        try { renderBarcode(`qa_p_${date}_L${idx}`, item.ID, item.Type); } catch(e) {}
-                    });
-                    items.slice(itemHalf).forEach((item, idx) => {
-                        try { renderBarcode(`qa_p_${date}_R${idx}`, item.ID, item.Type); } catch(e) {}
-                    });
-                });
-            }
+        // 移除舊的 beforeprint/afterprint 監聽
+        if(window._qaPrintHandler) {
+            window.removeEventListener('beforeprint', window._qaPrintHandler);
+            window.removeEventListener('afterprint',  window._qaAfterHandler);
+            window._qaPrintHandler = null;
+            window._qaAfterHandler = null;
         }
-
-        function doAfterPrint() {
-            printContainer.style.display = '';
-        }
-
-        // 移除舊的監聽避免重複
-        window.removeEventListener('beforeprint', window._qaPrintHandler);
-        window.removeEventListener('afterprint',  window._qaAfterHandler);
-        window._qaPrintHandler = doBeforePrint;
-        window._qaAfterHandler = doAfterPrint;
-        window.addEventListener('beforeprint', doBeforePrint);
-        window.addEventListener('afterprint',  doAfterPrint);
     }
 
     function removeQA(date, itemId = null) {
