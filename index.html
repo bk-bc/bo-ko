@@ -305,9 +305,9 @@
                 width: 100% !important;
             }
 
-            /* 文字 300% */
+            /* 文字固定 14px（iOS/Android 一致） */
             .qa-print-title {
-                font-size: 30px !important;
+                font-size: 14px !important;
                 font-weight: bold !important;
                 line-height: 1.2 !important;
                 word-break: break-all !important;
@@ -909,43 +909,37 @@
         });
         const sortedDates = Object.keys(expMap).sort();
 
-        // ── 螢幕模式：原本的單欄顯示 ──
-        // ── 列印模式：JS 預先分成左右兩欄（第一層分流），每群組內商品再分左右（第二層分流）──
-        // 用兩個平行欄位 div 裝日期群組，列印時並排，螢幕時隱藏右欄、只顯示螢幕版
-        
-        // 螢幕版容器（列印時隱藏）
+        // ── 螢幕版容器（列印時隱藏）──
         const screenContainer = document.createElement('div');
         screenContainer.className = 'qa-screen-container';
         resDiv.appendChild(screenContainer);
 
-        // 列印版容器（螢幕時隱藏）：左右兩欄並排
+        // ── 列印版容器（螢幕時隱藏）：左右兩欄並排 ──
         const printContainer = document.createElement('div');
         printContainer.className = 'qa-print-container';
-        printContainer.style.cssText = 'display:none; width:100%;';
-        const printLeft = document.createElement('div');
-        printLeft.className = 'qa-print-col';
+        const printLeft  = document.createElement('div');
+        printLeft.className  = 'qa-print-col';
         const printRight = document.createElement('div');
         printRight.className = 'qa-print-col';
         printContainer.appendChild(printLeft);
         printContainer.appendChild(printRight);
         resDiv.appendChild(printContainer);
 
-        // 計算左右欄分界：依群組數量平均分配
-        const half = Math.ceil(sortedDates.length / 2);
+        // ── 所有列印版群組先存起來，等 beforeprint 再動態分配欄位 ──
+        const printGroups = [];
 
         sortedDates.forEach((date, dateIdx) => {
             const items = expMap[date];
             const ym = parseInt(date.substring(0, 6));
             let bgClass = '';
-            if (ym <= currentYearMonth) bgClass = 'bg-month-current';
-            else if (ym === nextYearMonth) bgClass = 'bg-month-next';
-            else bgClass = 'bg-month-future';
+            if (ym <= currentYearMonth)      bgClass = 'bg-month-current';
+            else if (ym === nextYearMonth)   bgClass = 'bg-month-next';
+            else                              bgClass = 'bg-month-future';
 
             // ── 螢幕版群組 ──
             const screenGroup = document.createElement('div');
             screenGroup.className = `qa-group ${bgClass}`;
             screenGroup.style.cssText = 'padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #ddd;';
-            
             let screenHtml = `
                 <div class="qa-group-title flex-row" style="margin-bottom:10px; border-bottom:2px solid #333; padding-bottom:5px;">
                     <span style="font-weight:bold; font-size:1.1em;">到期日: ${date}</span>
@@ -972,15 +966,14 @@
 
             // ── 列印版群組：商品預先分左右兩小欄 ──
             const printGroup = document.createElement('div');
-            printGroup.className = `qa-group qa-print-group ${bgClass}`;
+            printGroup.className = `qa-print-group ${bgClass}`;
 
-            // 商品分左右：上半進左欄、下半進右欄
-            const itemHalf = Math.ceil(items.length / 2);
+            const itemHalf   = Math.ceil(items.length / 2);
             const leftItems  = items.slice(0, itemHalf);
             const rightItems = items.slice(itemHalf);
 
             let printHtml = `
-                <div class="qa-group-title" style="border-bottom:1.5pt solid #333; margin-bottom:4px; padding-bottom:3px; font-weight:bold; font-size:13px;">
+                <div class="qa-group-title" style="border-bottom:1pt solid #333; margin-bottom:3px; padding-bottom:2px; font-weight:bold; font-size:11px; text-align:center;">
                     到期日: ${date}
                 </div>
                 <div class="qa-print-items-row">
@@ -1007,15 +1000,9 @@
             });
             printHtml += `</div></div>`;
             printGroup.innerHTML = printHtml;
+            printGroups.push(printGroup); // 先存起來，不急著放進欄位
 
-            // 前半日期進左欄，後半進右欄
-            if (dateIdx < half) {
-                printLeft.appendChild(printGroup);
-            } else {
-                printRight.appendChild(printGroup);
-            }
-
-            // 渲染條碼（螢幕版）
+            // 渲染螢幕版條碼
             if(showBc) {
                 items.forEach((item, idx) => {
                     renderBarcode(`qa_s_${date}_${idx}`, item.ID, item.Type);
@@ -1023,10 +1010,39 @@
             }
         });
 
-        // 列印時渲染列印版條碼
-        if(showBc) {
-            // 用 setTimeout 確保 DOM 已掛載
-            setTimeout(() => {
+        // ── 先把所有列印群組都放進左欄（隱藏狀態），讓瀏覽器計算高度 ──
+        printGroups.forEach(g => printLeft.appendChild(g));
+
+        // ── beforeprint：量測每個群組的實際高度，動態決定左右分配 ──
+        // iOS/Android 列印前都會觸發此事件
+        function doBeforePrint() {
+            // 先顯示列印容器，讓瀏覽器能量測高度
+            printContainer.style.display = 'flex';
+            printLeft.innerHTML  = '';
+            printRight.innerHTML = '';
+
+            // A4 可用高約 257mm → 轉 px（1mm ≈ 3.7795px）
+            const pageHeightPx = 257 * 3.7795;
+            let leftH = 0, rightH = 0;
+
+            printGroups.forEach(g => {
+                // 暫時放進左欄量高度
+                printLeft.appendChild(g);
+                const h = g.offsetHeight + 5; // +5 為 gap
+
+                if (leftH <= rightH || leftH + h <= pageHeightPx) {
+                    // 左欄還裝得下，或左欄比右欄矮 → 放左欄
+                    leftH += h;
+                } else {
+                    // 左欄超過或比右欄高 → 移到右欄
+                    printLeft.removeChild(g);
+                    printRight.appendChild(g);
+                    rightH += h;
+                }
+            });
+
+            // 渲染列印版條碼
+            if(showBc) {
                 sortedDates.forEach(date => {
                     const items = expMap[date];
                     const itemHalf = Math.ceil(items.length / 2);
@@ -1037,8 +1053,20 @@
                         try { renderBarcode(`qa_p_${date}_R${idx}`, item.ID, item.Type); } catch(e) {}
                     });
                 });
-            }, 100);
+            }
         }
+
+        function doAfterPrint() {
+            printContainer.style.display = '';
+        }
+
+        // 移除舊的監聽避免重複
+        window.removeEventListener('beforeprint', window._qaPrintHandler);
+        window.removeEventListener('afterprint',  window._qaAfterHandler);
+        window._qaPrintHandler = doBeforePrint;
+        window._qaAfterHandler = doAfterPrint;
+        window.addEventListener('beforeprint', doBeforePrint);
+        window.addEventListener('afterprint',  doAfterPrint);
     }
 
     function removeQA(date, itemId = null) {
