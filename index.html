@@ -157,72 +157,131 @@
         }
 
         /* =============================================
-           修正4：列印樣式 - 修復卡片高度與文字截斷問題
+           列印樣式
            ============================================= */
         @media print {
             /* 隱藏不需要列印的元素 */
             header, .no-print, .card-sub { display: none !important; }
-
             body { padding: 0; background: white; }
             .container { padding: 0; }
 
-            /* 四欄強制並排 */
+            /* ── 搜尋列印：四欄等高 ── */
             .search-grid-container {
                 display: flex !important;
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
-                align-items: flex-start !important;
+                align-items: stretch !important;   /* ← 關鍵：讓四欄等高撐滿 */
                 width: 100% !important;
             }
             .search-column {
                 flex: 0 0 25% !important;
                 max-width: 25% !important;
                 padding: 2px !important;
-                gap: 3px !important;
+                gap: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
             }
 
-            /* 修正關鍵：移除固定高度，讓卡片自動撐開 */
-            .card {
+            /* 搜尋卡片：等高分配，每欄 12 張平均撐滿 */
+            .search-column .card {
+                flex: 1 1 0 !important;            /* ← 每張卡片等比例撐滿欄高 */
                 height: auto !important;
-                min-height: 70px !important;
-                max-height: none !important;        /* ✅ 移除高度上限 */
-                overflow: visible !important;        /* ✅ 不裁切內容 */
+                min-height: 0 !important;
+                max-height: none !important;
+                overflow: hidden !important;
                 border: 0.5pt solid #000 !important;
-                margin-bottom: 3px !important;
-                padding: 4px !important;
+                margin-bottom: 2px !important;
+                padding: 3px 4px !important;
                 page-break-inside: avoid;
                 break-inside: avoid;
                 box-shadow: none !important;
                 border-radius: 2px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
 
-            /* 修正關鍵：移除 card-title 固定高度 */
-            .card-title {
-                font-size: 9px !important;
-                line-height: 1.2 !important;
-                height: auto !important;             /* ✅ 不限高度 */
-                max-height: none !important;
-                margin: 1px 0 3px 0 !important;
-                overflow: visible !important;
-                white-space: normal !important;
+            /* 文字：固定兩行高度，字放大 */
+            .search-column .card-title {
+                font-size: 11px !important;
+                line-height: 1.35 !important;
+                height: 2.7em !important;          /* 固定兩行空間 */
+                overflow: hidden !important;
+                display: -webkit-box !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                margin: 0 0 2px 0 !important;
                 word-break: break-all !important;
             }
 
-            .barcode-wrapper {
+            /* 條碼縮小 */
+            .search-column .barcode-wrapper {
                 width: 100% !important;
                 text-align: center !important;
+                flex-shrink: 0 !important;
             }
-            .barcode {
-                width: 95% !important;
-                height: 35px !important;
+            .search-column .barcode {
+                width: 98% !important;
+                height: 28px !important;
                 display: block !important;
                 margin: 0 auto !important;
             }
 
-            /* 品保列印 */
+            /* ── 品保列印：兩欄、禁止群組/內容被切斷 ── */
             #qaResult {
+                display: block !important;          /* 改用 block + columns 更可靠 */
+                column-count: 2 !important;
+                column-gap: 8px !important;
+                column-fill: auto !important;
+            }
+
+            /* 每個日期群組：整體不被切斷 */
+            .qa-group {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                display: block !important;
+                margin-bottom: 8px !important;
+                border: 1.5pt solid #333 !important;
+                border-radius: 4px !important;
+                padding: 5px !important;
+                background: #fff !important;
+            }
+
+            /* 群組標題不被切斷 */
+            .qa-group-title {
+                break-after: avoid !important;
+                page-break-after: avoid !important;
+            }
+
+            /* 品保商品內層：兩欄排列 */
+            .qa-items-container {
+                display: grid !important;
                 grid-template-columns: 1fr 1fr !important;
-                gap: 5px !important;
+                gap: 3px !important;
+            }
+
+            /* 品保單一商品卡片：不被切斷 */
+            .qa-items-container .card {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                border: 0.5pt dashed #666 !important;
+                padding: 3px !important;
+                text-align: center !important;
+                box-shadow: none !important;
+            }
+
+            .qa-items-container .card-title {
+                font-size: 10px !important;
+                line-height: 1.3 !important;
+                word-break: break-all !important;
+                margin: 0 0 2px 0 !important;
+            }
+
+            .qa-items-container .barcode {
+                width: 95% !important;
+                height: 30px !important;
+                display: block !important;
+                margin: 0 auto !important;
             }
         }
     </style>
@@ -627,16 +686,16 @@
             });
         }
 
-        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 52 ? '52+' : filtered.length} (顯示上限52筆)`;
-        filtered = filtered.slice(0, 52);
+        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 48 ? '48+' : filtered.length} (顯示上限48筆)`;
+        filtered = filtered.slice(0, 48);
 
         const gridContainer = document.createElement('div');
         gridContainer.className = 'search-grid-container';
         resDiv.appendChild(gridContainer);
 
-        // 分成四組，每組13個
+        // 分成四組，每組12個
         for (let i = 0; i < 4; i++) {
-            const chunk = filtered.slice(i * 13, (i + 1) * 13);
+            const chunk = filtered.slice(i * 12, (i + 1) * 12);
             if (chunk.length === 0 && i > 0) break;
 
             const columnDiv = document.createElement('div');
@@ -644,7 +703,7 @@
             gridContainer.appendChild(columnDiv);
 
             chunk.forEach((item, chunkIdx) => {
-                const globalIdx = (i * 13) + chunkIdx;
+                const globalIdx = (i * 12) + chunkIdx;
                 const card = document.createElement('div');
                 card.className = 'card';
                 
