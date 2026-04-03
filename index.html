@@ -165,64 +165,61 @@
             body { padding: 0; background: white; }
             .container { padding: 0; }
 
-            /* ── 搜尋列印：四欄，每格固定高度撐滿整頁 ── */
-            /*
-             * 策略：不用 flex:1 搶高，改用固定高度。
-             * A4 直向可用高約 267mm，12 張卡片加間距。
-             * 每張卡片固定 = (267mm - 11*2px間距) / 12 ≈ 21mm
-             * 用 vh 近似：列印時 100vh ≈ 一頁高，每張約 8.2vh
-             */
+            /* ══════════════════════════════════════════
+               搜尋列印
+               • 高度 -10%：267mm → 240mm
+               • justify-content: flex-start（不拉寬間距）
+               • 文字 180%、白動跨行（不限行數、不裁切）
+               • 條碼固定高度，卡片高度自動由文字+條碼撐開
+               ══════════════════════════════════════════ */
             .search-grid-container {
                 display: flex !important;
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 align-items: flex-start !important;
                 width: 100% !important;
-                height: 267mm !important;           /* A4 可用高 */
+                /* 不給固定高度，讓卡片自然堆疊 */
             }
             .search-column {
                 flex: 0 0 25% !important;
                 max-width: 25% !important;
-                height: 100% !important;
                 padding: 0 2px !important;
                 gap: 0 !important;
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: space-between !important; /* 12 格平均分佈 */
+                justify-content: flex-start !important;  /* 不拉寬間距 */
+                align-items: stretch !important;
             }
 
-            /* 每張卡片：固定高度 = 欄高 / 12，文字+條碼都在裡面 */
+            /* 卡片：高度由內容決定，每張約佔 240mm/12 = 20mm */
             .search-column .card {
-                flex: 0 0 calc((267mm - 22px) / 12) !important;
-                height: calc((267mm - 22px) / 12) !important;
+                height: calc(240mm / 12) !important;     /* -10%後每格高度 */
                 overflow: hidden !important;
                 border: 0.5pt solid #000 !important;
-                margin: 0 !important;
+                margin: 0 0 1px 0 !important;
                 padding: 2px 3px !important;
                 box-shadow: none !important;
                 border-radius: 1px !important;
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: space-between !important;
+                justify-content: flex-start !important;
                 box-sizing: border-box !important;
             }
 
-            /* 文字：兩行，字放大 */
+            /* 文字：180%、自動跨行、不裁切行數 */
             .search-column .card-title {
-                font-size: 11px !important;
+                font-size: 18px !important;              /* 180%（基準約10px） */
                 font-weight: bold !important;
-                line-height: 1.3 !important;
-                height: 2.6em !important;
+                line-height: 1.25 !important;
+                white-space: normal !important;
                 overflow: hidden !important;
-                display: -webkit-box !important;
-                -webkit-line-clamp: 2 !important;
-                -webkit-box-orient: vertical !important;
-                margin: 0 !important;
                 word-break: break-all !important;
+                margin: 0 0 2px 0 !important;
                 flex-shrink: 0 !important;
+                /* 不加 -webkit-line-clamp，讓文字自然跨行 */
             }
 
-            /* 條碼：撐滿剩餘空間 */
+            /* 條碼：撐滿卡片剩餘空間 */
             .search-column .barcode-wrapper {
                 flex: 1 1 0 !important;
                 display: flex !important;
@@ -234,22 +231,23 @@
             .search-column .barcode {
                 width: 100% !important;
                 height: 100% !important;
-                max-height: 30px !important;
+                max-height: 26px !important;
                 display: block !important;
             }
 
-            /* ── 品保列印：報紙分欄（內容由上往下，滿了才往右） ── */
-            /*
-             * 用 CSS columns：內容 1→2→3→4→5→6 由上往下流，
-             * 左欄流滿後自動跳右欄，效果就是
-             *   左欄: 1,2,3...
-             *   右欄: 4,5,6...
-             * 每個 qa-group 設 break-inside:avoid，確保不被切斷
-             */
+            /* ══════════════════════════════════════════
+               品保列印
+               • 第一層：日期群組做報紙分欄（左欄流滿跳右欄）
+               • 第二層：每個群組內的商品再做報紙分欄
+               • 文字 300%
+               • 群組與商品卡片都不被切斷
+               ══════════════════════════════════════════ */
+
+            /* 第一層：日期群組報紙分欄 */
             #qaResult {
                 display: block !important;
                 column-count: 2 !important;
-                column-gap: 10px !important;
+                column-gap: 8px !important;
                 column-fill: auto !important;       /* 由上往下填，不強制等高 */
                 width: 100% !important;
             }
@@ -259,47 +257,54 @@
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
                 display: block !important;
-                margin-bottom: 8px !important;
+                margin-bottom: 6px !important;
                 border: 1.5pt solid #333 !important;
                 border-radius: 3px !important;
-                padding: 5px !important;
+                padding: 4px !important;
                 background: #fff !important;
             }
 
-            /* 群組標題與內容之間不斷頁 */
+            /* 群組標題：不與內容分離 */
             .qa-group-title {
                 break-after: avoid !important;
                 page-break-after: avoid !important;
-                font-size: 11px !important;
+                font-size: 13px !important;
+                margin-bottom: 4px !important;
             }
 
-            /* 品保商品內層：維持兩欄並排 */
+            /* 第二層：商品在群組內再做報紙分欄 */
             .qa-items-container {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: 3px !important;
+                display: block !important;           /* 改為 block 才能套 columns */
+                column-count: 2 !important;
+                column-gap: 4px !important;
+                column-fill: auto !important;
             }
 
-            /* 品保單一商品卡片：不被切斷 */
+            /* 商品卡片：不被切斷 */
             .qa-items-container .card {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
+                display: block !important;
                 border: 0.5pt dashed #666 !important;
                 padding: 3px !important;
                 text-align: center !important;
                 box-shadow: none !important;
+                margin-bottom: 3px !important;
             }
 
+            /* 文字 300% */
             .qa-items-container .card-title {
-                font-size: 10px !important;
-                line-height: 1.3 !important;
+                font-size: 30px !important;          /* 300%（基準約10px） */
+                font-weight: bold !important;
+                line-height: 1.2 !important;
                 word-break: break-all !important;
-                margin: 0 0 2px 0 !important;
+                white-space: normal !important;
+                margin: 0 0 3px 0 !important;
             }
 
             .qa-items-container .barcode {
                 width: 95% !important;
-                height: 30px !important;
+                height: 32px !important;
                 display: block !important;
                 margin: 0 auto !important;
             }
