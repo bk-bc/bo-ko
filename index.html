@@ -1,4 +1,5 @@
 <meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -13,204 +14,222 @@
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; padding: 0; background-color: var(--bg-color); padding-bottom: 60px; }
-        
-        /* Sticky Header */
-        header {
-            position: sticky; top: 0; z-index: 1000; background: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px;
-        }
-        .header-stats { font-size: 0.85em; color: #666; margin-bottom: 5px; }
-        .nav-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
-        .nav-buttons button { flex: 1 1 auto; padding: 8px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; }
-        .nav-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
-        
-        /* Layout & Cards */
-        .container { padding: 0 10px;max-width: 100%;  margin: 0 auto; }
-        .section { display: none; }
-        .section.active { display: block; }
-        .card { background: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);    display: flex;
-    flex-direction: column;
- }
-        .card-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; word-break: break-all; }
-        .card-sub { font-size: 0.9em; color: #555; margin-bottom: 8px; }
-        .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-        .no-print button, .btn-danger, .btn-warning {
-    flex-shrink: 0 !important; /* 🔥 防止按鈕因為空間不足而縮小或被擠掉 */
-    white-space: nowrap !important; /* 🔥 確保按鈕內的文字不會斷行 */
-}
-        /* Inputs & Buttons */
-        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-warning { background: var(--warning); color: black; }
-        .btn-pink { background: var(--pink); color: white; }
-        .btn-yellow { background: var(--yellow); color: black; }
-        .btn-lightblue { background: var(--lightblue); color: black; }
-        
-        .flex-row { display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; margin-bottom: 10px;}
-        .flex-row > * { flex: 1; }
-        
-        svg.barcode { width: 100%; max-height: 80px; }
 
-#searchResult {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
-    gap: 12px;
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
-    align-items: stretch;
-}
-
-.card {
-    background: var(--card-bg);
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-width: 0;
-}
-
-.card svg.barcode {
-    width: 100% !important;
-    height: auto !important;
-    max-height: 70px;
-}
-/* 螢幕顯示用的品保三色提示 */
-.bg-month-current { background-color: #ffe6e6 !important; } /* 淺紅 */
-.bg-month-next    { background-color: #ffe5b4 !important; } /* 淺橘 */
-.bg-month-future  { background-color: #ffffcc !important; } /* 淺黃 */
-/* --- 搜尋結果網格 (修正版：移除脆弱的 Grid) --- */
-.search-grid-container {
-    display: flex;
-    flex-wrap: wrap; /* 手機版自動換行 */
-    width: 100%;
-    margin: 0 auto;
-}
-
-.search-column {
-    flex: 0 0 100%; /* 預設手機：每一組佔 100% 寬 */
-    max-width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 5px;
-    box-sizing: border-box;
-}
-
-/* 寬螢幕手機 (兩欄) */
-@media screen and (min-width: 600px) {
-    .search-column {
-        flex: 0 0 50%;
-        max-width: 50%;
+```
+    /* Sticky Header */
+    header {
+        position: sticky; top: 0; z-index: 1000; background: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px;
     }
-}
+    .header-stats { font-size: 0.85em; color: #666; margin-bottom: 5px; }
+    .nav-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+    .nav-buttons button { flex: 1 1 auto; padding: 8px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 4px; cursor: pointer; }
+    .nav-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    /* Layout & Cards */
+    .container { padding: 0 10px; max-width: 100%; margin: 0 auto; }
+    .section { display: none; }
+    .section.active { display: block; }
 
-/* 平板與列印模式 (強制四欄並排) */
-@media screen and (min-width: 1024px), print {
-    .search-grid-container {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important; /* 強制不換行，確保 1|2|3|4 並列 */
-        align-items: flex-start !important;
-    }
-    .search-column {
-        flex: 0 0 25% !important; /* 每一行精確佔用 25% */
-        max-width: 25% !important;
-        padding: 2px !important;
-    }
-}
-
-/* --- 卡片高度與條碼加固 --- */
-@media print {
+    /* =============================================
+       修正1：卡片基礎樣式 - 移除重複定義，統一為一份
+       ============================================= */
     .card {
-        height: 75px !important;
-        min-height: 75px !important;
-        max-height: 75px !important;
-        overflow: hidden !important;
-        border: 0.5pt solid #000 !important; /* 列印用細線 */
-        margin-bottom: 2px !important;
-        position: relative !important;
-        display: block !important;
+        background: var(--card-bg);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-width: 0;
+        word-break: break-all;
     }
 
+    /* =============================================
+       修正2：card-title 移除固定高度，讓文字自然展開
+       ============================================= */
     .card-title {
-        font-size: 10px !important;
-        line-height: 1.1 !important;
-        height: 2.2em !important;
-        margin: 2px !important;
+        font-weight: bold;
+        font-size: 1em;
+        margin-bottom: 5px;
+        word-break: break-all;
+        white-space: normal;
+        line-height: 1.3;
+    }
+    .card-sub { font-size: 0.85em; color: #555; margin-bottom: 5px; word-break: break-all; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .no-print button, .btn-danger, .btn-warning {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+    
+    /* Inputs & Buttons */
+    input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-warning { background: var(--warning); color: black; }
+    .btn-pink { background: var(--pink); color: white; }
+    .btn-yellow { background: var(--yellow); color: black; }
+    .btn-lightblue { background: var(--lightblue); color: black; }
+    
+    .flex-row { display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; margin-bottom: 10px; }
+    .flex-row > * { flex: 1; }
+    
+    svg.barcode { width: 100%; max-height: 80px; }
+
+    /* 品保三色 */
+    .bg-month-current { background-color: #ffe6e6 !important; }
+    .bg-month-next    { background-color: #ffe5b4 !important; }
+    .bg-month-future  { background-color: #ffffcc !important; }
+
+    /* =============================================
+       修正3：搜尋網格 - 手機預設兩欄，平板/桌機四欄
+       ============================================= */
+    .search-grid-container {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        margin: 0;
+        padding: 0;
     }
 
-    .barcode-wrapper {
-        position: absolute !important;
-        bottom: 2px !important;
+    .search-column {
+        flex: 0 0 50%;       /* 手機：兩欄 */
+        max-width: 50%;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 4px;
+        box-sizing: border-box;
+    }
+
+    /* 平板以上：四欄 */
+    @media screen and (min-width: 900px) {
+        .search-column {
+            flex: 0 0 25%;
+            max-width: 25%;
+        }
+    }
+
+    .card svg.barcode {
         width: 100% !important;
-        text-align: center !important;
+        height: auto !important;
+        max-height: 60px;
     }
 
-    .barcode {
-        width: 90% !important;
-        height: 40px !important;
-    }
-
-    /* 隱藏多餘內容 */
-    .card-sub, .no-print { display: none !important; }
-}
-
-/* --- 品保外層佈局 (按日期分組) --- */
-#qaResult {
-    display: grid;
-    grid-template-columns: 1fr; /* 手機版：一個日期群組佔滿一列 */
-    gap: 10px;
-    width: 100%;
-}
-
-/* 平板/桌機/列印模式：日期群組兩倍排列 (1|2, 3|4) */
-@media (min-width: 900px), print {
+    /* 品保外層佈局 */
     #qaResult {
-        grid-template-columns: 1fr 1fr; 
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        width: 100%;
     }
-}
+    @media (min-width: 900px) {
+        #qaResult { grid-template-columns: 1fr 1fr; }
+    }
 
-/* 單個日期群組的框線設計 */
-.qa-group {
-    border: 2px solid #333;
-    border-radius: 6px;
-    padding: 6px;
-    background: #fff;
-    /* 列印極度重要：防斷行 */
-    break-inside: avoid;
-    page-break-inside: avoid;
-}
+    .qa-group {
+        border: 2px solid #333;
+        border-radius: 6px;
+        padding: 6px;
+        background: #fff;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .qa-group-title {
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+    }
+    .qa-items-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+    .qa-items-container .card {
+        border: 1px dashed #666;
+        padding: 4px;
+        text-align: center;
+    }
 
-/* 到期日標題 */
-.qa-group-title {
-    text-align: center;
-    font-weight: bold;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
-}
+    /* =============================================
+       修正4：列印樣式 - 修復卡片高度與文字截斷問題
+       ============================================= */
+    @media print {
+        /* 隱藏不需要列印的元素 */
+        header, .no-print, .card-sub { display: none !important; }
 
-/* --- 品保內層商品佈局 (強制 2 排) --- */
-.qa-items-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 無論手機還是列印，一律雙排顯示 */
-    gap: 4px;
-}
+        body { padding: 0; background: white; }
+        .container { padding: 0; }
 
-.qa-items-container .card {
-    border: 1px dashed #666;
-    padding: 4px;
-    text-align: center;
-}
+        /* 四欄強制並排 */
+        .search-grid-container {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-start !important;
+            width: 100% !important;
+        }
+        .search-column {
+            flex: 0 0 25% !important;
+            max-width: 25% !important;
+            padding: 2px !important;
+            gap: 3px !important;
+        }
 
-        
-    </style>
+        /* 修正關鍵：移除固定高度，讓卡片自動撐開 */
+        .card {
+            height: auto !important;
+            min-height: 70px !important;
+            max-height: none !important;        /* ✅ 移除高度上限 */
+            overflow: visible !important;        /* ✅ 不裁切內容 */
+            border: 0.5pt solid #000 !important;
+            margin-bottom: 3px !important;
+            padding: 4px !important;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            box-shadow: none !important;
+            border-radius: 2px !important;
+        }
+
+        /* 修正關鍵：移除 card-title 固定高度 */
+        .card-title {
+            font-size: 9px !important;
+            line-height: 1.2 !important;
+            height: auto !important;             /* ✅ 不限高度 */
+            max-height: none !important;
+            margin: 1px 0 3px 0 !important;
+            overflow: visible !important;
+            white-space: normal !important;
+            word-break: break-all !important;
+        }
+
+        .barcode-wrapper {
+            width: 100% !important;
+            text-align: center !important;
+        }
+        .barcode {
+            width: 95% !important;
+            height: 35px !important;
+            display: block !important;
+            margin: 0 auto !important;
+        }
+
+        /* 品保列印 */
+        #qaResult {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 5px !important;
+        }
+    }
+</style>
+```
+
 </head>
 <body>
 
@@ -243,59 +262,62 @@
         <button class="btn-primary" onclick="addItems()" style="width: 100%;">新增</button>
     </div>
 
-    <div id="search" class="section">
-        <div class="flex-row no-print">
-    <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
-    <label><input type="checkbox" id="shortcutToggle" checked onchange="renderSearch()"> 快捷鍵</label>
-    <button class="btn-success" onclick="clearOrder()">已訂貨</button>
-    <button class="btn-primary" onclick="window.print()">🖨️ 列印標籤</button>
-</div>
-        <div id="searchFilters" class="no-print">
-            <div class="flex-row">
-                <select id="searchC1" onchange="renderSearch()"><option value="">C1: 全部搜尋</option></select>
-                <select id="searchEvent" onchange="renderSearch()"><option value="">Event: 全部搜尋</option></select>
-            </div>
-            <div class="flex-row">
-                <input type="text" id="searchKeyword1" placeholder="關鍵字 1 (ID/Name)" oninput="renderSearch()">
-                <input type="text" id="searchKeyword2" placeholder="關鍵字 2 (ID/Name)" oninput="renderSearch()">
-            </div>
-        </div>
-        <div class="header-stats" id="searchCount"></div>
-        <div id="searchResult"></div>
+```
+<div id="search" class="section">
+    <div class="flex-row no-print">
+        <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
+        <label><input type="checkbox" id="shortcutToggle" checked onchange="renderSearch()"> 快捷鍵</label>
+        <button class="btn-success" onclick="clearOrder()">已訂貨</button>
+        <button class="btn-primary" onclick="window.print()">🖨️ 列印標籤</button>
     </div>
-
-    <div id="error" class="section">
-        <div class="header-stats" id="errorStats"></div>
-        <div id="errorResult"></div>
-    </div>
-
-    <div id="qa" class="section">
-        <div class="flex-row no-print">
-            <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
-            <button class="btn-primary" onclick="window.print()">列印</button>
-        </div>
-        <div id="qaResult" class="print-container"></div>
-    </div>
-
-    <div id="classify" class="section">
+    <div id="searchFilters" class="no-print">
         <div class="flex-row">
-            <select id="classifySelect" onchange="handleClassifySelect()">
-                <option value="">選擇分類</option>
-                <option value="NEW_CATEGORY">-- 新增分類 --</option>
-            </select>
-            <input type="text" id="newCategoryInput" placeholder="輸入新分類名稱" style="display:none; flex:1; margin-bottom:0;">
-            <button class="btn-primary" onclick="applyClassification()">分類</button>
+            <select id="searchC1" onchange="renderSearch()"><option value="">C1: 全部搜尋</option></select>
+            <select id="searchEvent" onchange="renderSearch()"><option value="">Event: 全部搜尋</option></select>
         </div>
-        <div id="classifyResult"></div>
+        <div class="flex-row">
+            <input type="text" id="searchKeyword1" placeholder="關鍵字 1 (ID/Name)" oninput="renderSearch()">
+            <input type="text" id="searchKeyword2" placeholder="關鍵字 2 (ID/Name)" oninput="renderSearch()">
+        </div>
     </div>
+    <div class="header-stats no-print" id="searchCount"></div>
+    <div id="searchResult"></div>
+</div>
 
-    <div id="activity" class="section">
-        <div id="activityTags" class="nav-buttons" style="margin-bottom: 10px;"></div>
-        <input type="text" id="activityInput" placeholder="輸入活動名稱">
-        <textarea id="activitySearch" rows="4" placeholder="貼上多行關鍵字搜尋 Name" oninput="searchActivity()"></textarea>
-        <div id="activitySearchResult" style="margin-bottom:10px; font-size:0.9em; color:#555;"></div>
-        <button class="btn-primary" onclick="addActivity()" style="width: 100%;">加入活動</button>
+<div id="error" class="section">
+    <div class="header-stats" id="errorStats"></div>
+    <div id="errorResult"></div>
+</div>
+
+<div id="qa" class="section">
+    <div class="flex-row no-print">
+        <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
+        <button class="btn-primary" onclick="window.print()">列印</button>
     </div>
+    <div id="qaResult" class="print-container"></div>
+</div>
+
+<div id="classify" class="section">
+    <div class="flex-row">
+        <select id="classifySelect" onchange="handleClassifySelect()">
+            <option value="">選擇分類</option>
+            <option value="NEW_CATEGORY">-- 新增分類 --</option>
+        </select>
+        <input type="text" id="newCategoryInput" placeholder="輸入新分類名稱" style="display:none; flex:1; margin-bottom:0;">
+        <button class="btn-primary" onclick="applyClassification()">分類</button>
+    </div>
+    <div id="classifyResult"></div>
+</div>
+
+<div id="activity" class="section">
+    <div id="activityTags" class="nav-buttons" style="margin-bottom: 10px;"></div>
+    <input type="text" id="activityInput" placeholder="輸入活動名稱">
+    <textarea id="activitySearch" rows="4" placeholder="貼上多行關鍵字搜尋 Name" oninput="searchActivity()"></textarea>
+    <div id="activitySearchResult" style="margin-bottom:10px; font-size:0.9em; color:#555;"></div>
+    <button class="btn-primary" onclick="addActivity()" style="width: 100%;">加入活動</button>
+</div>
+```
+
 </div>
 <input type="date" id="hiddenDatePicker" style="position:fixed; top:-100px; left:-100px; opacity:0;">
 
@@ -304,38 +326,26 @@
     let db = []; 
     let stats = { imported: 0, merged: 0 };
 
-        // --- 初始化 ---
-window.onload = () => {
-    const stored = localStorage.getItem('retailDB');
-    if (stored) {
-        let rawData = JSON.parse(stored);
-        
-        // 1. 先做初步修復：確保所有項目都有基本欄位，避免後續噴錯
-        rawData.forEach(item => {
-            if (item.Locked === undefined || item.Locked === 'undefined' || item.Locked === null || item.Locked === '') {
-                item.Locked = 'False';
-            }
-            if (!item.C1) item.C1 = '未分類';
-            // 統一格式化 Expiry 和 Event
-            item.Expiry = cleanArrayStr(item.Expiry, true);
-            item.Event = cleanArrayStr(item.Event, false, item.Name, item.ID);
-        });
-
-        // 2. 執行「大掃除」：將舊資料全部重新跑一遍 upsert 規則
-        // 先清空目前的 db，然後逐一重新塞入
-        db = []; 
-        rawData.forEach(item => {
-            upsertItem(item);
-        });
-
-        // 3. 儲存重整後的結果
-        saveData();
-    }
-    updateStatsUI();
-    renderAddType();
-};
-
-
+    // --- 初始化 ---
+    window.onload = () => {
+        const stored = localStorage.getItem('retailDB');
+        if (stored) {
+            let rawData = JSON.parse(stored);
+            rawData.forEach(item => {
+                if (item.Locked === undefined || item.Locked === 'undefined' || item.Locked === null || item.Locked === '') {
+                    item.Locked = 'False';
+                }
+                if (!item.C1) item.C1 = '未分類';
+                item.Expiry = cleanArrayStr(item.Expiry, true);
+                item.Event = cleanArrayStr(item.Event, false, item.Name, item.ID);
+            });
+            db = []; 
+            rawData.forEach(item => { upsertItem(item); });
+            saveData();
+        }
+        updateStatsUI();
+        renderAddType();
+    };
 
     function saveData() {
         localStorage.setItem('retailDB', JSON.stringify(db));
@@ -356,66 +366,38 @@ window.onload = () => {
     }
 
     // --- 共用工具 ---
-function cleanArrayStr(str, isDate = false, itemName = '', itemID = '') {
-    if (!str) return '';
-    
-    // 將字串切開成陣列、去空白、過濾空值
-    let arr = str.split('/').map(s => s.trim()).filter(Boolean);
-    
-    if (isDate) {
-        // ========== 處理「到期日 (Expiry)」 ==========
-        // 1. 嚴格過濾：只保留 20 開頭的 8 位數字 (你原本的強大防護)
-        arr = arr.filter(d => /^20\d{6}$/.test(d));
-        
-        // 2. 排序日期：讓最快到期的排在前面 (方便檢視)
-        arr.sort();
-        
-    } else {
-        // ========== 處理「活動 (Event)」 ==========
-        const today = new Date();
-        const expirationDays = 30; // 這裡我先幫你設為 30 天，你可以自由改成 14
-
-        arr = arr.filter(e => {
-            // 【關卡一：排除與 Name 或 ID 完全相同的活動】
-            const exactMatchRegex = new RegExp(`^(${escapeRegExp(itemName)}|${escapeRegExp(itemID)})$`, 'i');
-            if (exactMatchRegex.test(e)) {
-                return false; // 觸發規則，把它濾掉
-            }
-
-            // 【關卡二：檢查是否為帶日期的活動，並判斷過期】
-            const dateMatch = e.match(/^(\d{8})_/);
-            if (dateMatch) {
-                const eventDateStr = dateMatch[1];
-                
-                // 確保年份合理 (20xx開頭) 才進行運算，防呆機制
-                if (eventDateStr.substring(0, 2) === "20") {
-                    const year = parseInt(eventDateStr.substring(0, 4));
-                    const month = parseInt(eventDateStr.substring(4, 6)) - 1; // JS月份從0開始
-                    const day = parseInt(eventDateStr.substring(6, 8));
-                    const eventDate = new Date(year, month, day);
-                    
-                    // 確認日期格式正確 (避免像 20261345 這種無效日期)
-                    if (!isNaN(eventDate.getTime())) {
-                        const diffTime = today - eventDate;
-                        const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                        
-                        // 如果超過設定天數，濾掉！
-                        if (diffDays > expirationDays) {
-                            console.log(`活動已過期自動清除: ${e}`);
-                            return false; 
+    function cleanArrayStr(str, isDate = false, itemName = '', itemID = '') {
+        if (!str) return '';
+        let arr = str.split('/').map(s => s.trim()).filter(Boolean);
+        if (isDate) {
+            arr = arr.filter(d => /^20\d{6}$/.test(d));
+            arr.sort();
+        } else {
+            const today = new Date();
+            const expirationDays = 30;
+            arr = arr.filter(e => {
+                const exactMatchRegex = new RegExp(`^(${escapeRegExp(itemName)}|${escapeRegExp(itemID)})$`, 'i');
+                if (exactMatchRegex.test(e)) return false;
+                const dateMatch = e.match(/^(\d{8})_/);
+                if (dateMatch) {
+                    const eventDateStr = dateMatch[1];
+                    if (eventDateStr.substring(0, 2) === "20") {
+                        const year = parseInt(eventDateStr.substring(0, 4));
+                        const month = parseInt(eventDateStr.substring(4, 6)) - 1;
+                        const day = parseInt(eventDateStr.substring(6, 8));
+                        const eventDate = new Date(year, month, day);
+                        if (!isNaN(eventDate.getTime())) {
+                            const diffTime = today - eventDate;
+                            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                            if (diffDays > expirationDays) return false;
                         }
                     }
                 }
-            }
-            
-            // 如果通過了第一關(沒重複)跟第二關(沒過期，或根本沒帶日期)，就保留！
-            return true;
-        });
+                return true;
+            });
+        }
+        return [...new Set(arr)].join('/');
     }
-    
-    // 最後統一去除重複項，並用 '/' 組合回去
-    return [...new Set(arr)].join('/');
-}
 
     function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -437,101 +419,65 @@ function cleanArrayStr(str, isDate = false, itemName = '', itemID = '') {
         try {
             JsBarcode(`#${targetId}`, value, {
                 format: format.includes('EAN') || format.includes('UPC') ? format : 'CODE128',
-                displayValue: true, height: 40, margin: 0, width: 2
+                displayValue: true, height: 35, margin: 0, width: 1.5
             });
         } catch (e) {
             console.error("Barcode error:", e);
         }
     }
-function upsertItem(newItem) {
-    // 【新增規則：強制造型校驗】
-    // 檢查 Name 是否至少有 6 位數，且開頭 6 位必須是數字
-    const namePrefix = newItem.Name.substring(0, 6);
-    const isSixDigits = /^\d{6}$/.test(namePrefix);
 
-    if (!isSixDigits) {
-        console.warn(`過濾無效資料：ID ${newItem.ID} 的 Name "${newItem.Name}" 不符合 6 位數字開頭規則。`);
-        return { imported: 0, merged: 0 }; 
-    }
-
-    // 找出資料庫中所有同 ID 的項目
-    let existing = db.filter(i => i.ID === newItem.ID);
-
-    // 情況 1：完全沒有重複的 ID -> 清洗後直接新增
-    if (existing.length === 0) {
-        newItem.Expiry = cleanArrayStr(newItem.Expiry, true);
-        newItem.Event = cleanArrayStr(newItem.Event, false, newItem.Name, newItem.ID);
-        db.push(newItem);
-        return { imported: 1, merged: 0 };
-    }
-
-    // =====================================================================
-    // 🔥 【黃金防護網：提前聯集 Expiry 與 Event】 🔥
-    // 只要 ID 相同，不管後續誰輸誰贏，先把所有人的努力成果收集起來！
-    let allExp = newItem.Expiry || "";
-    let allEv = newItem.Event || "";
-    
-    existing.forEach(e => {
-        allExp += "/" + (e.Expiry || "");
-        allEv += "/" + (e.Event || "");
-    });
-
-    // 統一進行清洗去重複
-    let finalPooledExpiry = cleanArrayStr(allExp, true);
-    
-    // 將聯集後的結果，無條件發放回 newItem 與所有 existing 項目身上
-    newItem.Expiry = finalPooledExpiry;
-    newItem.Event = cleanArrayStr(allEv, false, newItem.Name, newItem.ID);
-    
-    existing.forEach(e => {
-        e.Expiry = finalPooledExpiry;
-        e.Event = cleanArrayStr(allEv, false, e.Name, e.ID); // 針對各自的 Name 進行清洗
-    });
-    // =====================================================================
-
-    // 情況 2：尋找是否有 Name, Type, C1「完全一致」的項目
-    let perfectMatch = existing.find(e => e.Name === newItem.Name && e.Type === newItem.Type && e.C1 === newItem.C1);
-
-    if (perfectMatch) {
-        // 【規則1 & 規則4前半】完全重複
-        // (Expiry 和 Event 已經在上方聯集過了，這裡不需再寫)
-        if (newItem.Locked === 'True') perfectMatch.Locked = 'True';
-        return { imported: 0, merged: 1 };
-    }
-
-    // --- 執行到此，代表 ID 相同，但 Name, Type, C1 至少有一項不同 (產生衝突) ---
-    let lockedExisting = existing.filter(e => e.Locked === 'True');
-    let totalLocks = lockedExisting.length + (newItem.Locked === 'True' ? 1 : 0);
-
-    if (totalLocks === 0) {
-        // 【規則2】衝突且無 Locked -> 當作新衝突項目加入，待勘誤頁面處理
-        db.push(newItem); 
-        // 💡 備註：此時 existing 與 newItem 身上都有完整的日期，日後勘誤刪除任一筆皆無損耗
-        return { imported: 1, merged: 0 };
-        
-    } else if (totalLocks === 1) {
-        // 【規則3】衝突且只有一個 Locked 為 True
-        if (newItem.Locked === 'True') {
-            // 新資料是鎖定的：刪除舊有同 ID 項目，推入新鎖定項目
-            db = db.filter(i => i.ID !== newItem.ID);
+    function upsertItem(newItem) {
+        const namePrefix = newItem.Name.substring(0, 6);
+        const isSixDigits = /^\d{6}$/.test(namePrefix);
+        if (!isSixDigits) {
+            console.warn(`過濾無效資料：ID ${newItem.ID} 的 Name "${newItem.Name}" 不符合 6 位數字開頭規則。`);
+            return { imported: 0, merged: 0 }; 
+        }
+        let existing = db.filter(i => i.ID === newItem.ID);
+        if (existing.length === 0) {
+            newItem.Expiry = cleanArrayStr(newItem.Expiry, true);
+            newItem.Event = cleanArrayStr(newItem.Event, false, newItem.Name, newItem.ID);
             db.push(newItem);
-            return { imported: 1, merged: existing.length };
-        } else {
-            // 舊資料中有鎖定的：直接保留舊的，拋棄新資料的 Name/Type/C1
-            // (舊資料已在上方獲取了新資料帶來的日期與活動)
+            return { imported: 1, merged: 0 };
+        }
+        let allExp = newItem.Expiry || "";
+        let allEv = newItem.Event || "";
+        existing.forEach(e => {
+            allExp += "/" + (e.Expiry || "");
+            allEv += "/" + (e.Event || "");
+        });
+        let finalPooledExpiry = cleanArrayStr(allExp, true);
+        newItem.Expiry = finalPooledExpiry;
+        newItem.Event = cleanArrayStr(allEv, false, newItem.Name, newItem.ID);
+        existing.forEach(e => {
+            e.Expiry = finalPooledExpiry;
+            e.Event = cleanArrayStr(allEv, false, e.Name, e.ID);
+        });
+        let perfectMatch = existing.find(e => e.Name === newItem.Name && e.Type === newItem.Type && e.C1 === newItem.C1);
+        if (perfectMatch) {
+            if (newItem.Locked === 'True') perfectMatch.Locked = 'True';
             return { imported: 0, merged: 1 };
         }
-        
-    } else {
-        // 【規則4後半】衝突且有多個 Locked 為 True -> 全部解除鎖定，加入新衝突待勘誤
-        existing.forEach(e => {
-            if(e.Locked === 'True') e.Locked = 'False';
-        });
-        newItem.Locked = 'False';
-        db.push(newItem);
-        return { imported: 1, merged: 0 };
+        let lockedExisting = existing.filter(e => e.Locked === 'True');
+        let totalLocks = lockedExisting.length + (newItem.Locked === 'True' ? 1 : 0);
+        if (totalLocks === 0) {
+            db.push(newItem); 
+            return { imported: 1, merged: 0 };
+        } else if (totalLocks === 1) {
+            if (newItem.Locked === 'True') {
+                db = db.filter(i => i.ID !== newItem.ID);
+                db.push(newItem);
+                return { imported: 1, merged: existing.length };
+            } else {
+                return { imported: 0, merged: 1 };
+            }
+        } else {
+            existing.forEach(e => { if(e.Locked === 'True') e.Locked = 'False'; });
+            newItem.Locked = 'False';
+            db.push(newItem);
+            return { imported: 1, merged: 0 };
+        }
     }
-}
 
     function importCSV() {
         const file = document.getElementById('csvFile').files[0];
@@ -540,24 +486,19 @@ function upsertItem(newItem) {
         reader.onload = function(e) {
             const lines = e.target.result.split('\n');
             let processedCount = 0; let newMergeCount = 0; let newAddCount = 0;
-            
-            // 跳過標題行
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 const parts = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
                 if (parts.length < 7) continue;
-                
                 let [Type, ID, Name, C1, Expiry, Event, Locked] = parts;
                 Type = Type.toUpperCase();
                 Locked = (Locked === 'True') ? 'True' : 'False';
                 processedCount++;
-
                 let newItem = {Type, ID, Name, C1, Expiry, Event, Locked};
                 let res = upsertItem(newItem);
                 newAddCount += res.imported;
                 newMergeCount += res.merged;
             }
-            
             stats.imported += processedCount;
             stats.merged += newMergeCount;
             saveData();
@@ -581,13 +522,12 @@ function upsertItem(newItem) {
     }
 
     // --- 1. 新增功能 ---
-    function renderAddType() { } // 靜態 HTML 已處理
+    function renderAddType() { }
     function addItems() {
         const type = document.getElementById('addType').value;
         const text = document.getElementById('addInput').value;
         const lines = text.split('\n').filter(l => l.trim());
         let processed = 0; let added = 0; let merged = 0;
-        
         lines.forEach(line => {
             const [ID, Name] = line.split('/');
             if (ID && Name) {
@@ -598,7 +538,6 @@ function upsertItem(newItem) {
                 merged += res.merged;
             }
         });
-        
         stats.imported += processed;
         stats.merged += merged;
         saveData();
@@ -607,31 +546,26 @@ function upsertItem(newItem) {
     }
 
     // --- 2. 搜尋功能 ---
-           function populateSearchDropdowns() {
+    function populateSearchDropdowns() {
         const c1Set = new Set(), eventSet = new Set();
         db.forEach(item => {
             if(item.C1) c1Set.add(item.C1);
             if(item.Event) {
                 item.Event.split('/').forEach(e => { 
                     if(e) {
-                        // 關鍵：過濾掉尾端的 _001 序號，再塞入 Set
                         const cleanEvent = e.replace(/_\d{3}$/, '');
                         eventSet.add(cleanEvent); 
                     }
                 });
             }
         });
-        
         let c1Html = `<option value="">C1: 全部搜尋</option>`;
         [...c1Set].sort((a, b) => a.localeCompare(b, 'zh-TW')).forEach(c => c1Html += `<option value="${c}">${c}</option>`);
         document.getElementById('searchC1').innerHTML = c1Html;
-
         let evHtml = `<option value="">Event: 全部搜尋</option>`;
         [...eventSet].sort((a, b) => a.localeCompare(b, 'zh-TW')).forEach(e => evHtml += `<option value="${e}">${e}</option>`);
         document.getElementById('searchEvent').innerHTML = evHtml;
     }
-
-
 
     function clearOrder() {
         db.forEach(item => {
@@ -643,122 +577,158 @@ function upsertItem(newItem) {
         renderSearch();
     }
 
-function renderSearch() {
-    const isFresh = document.getElementById('freshFoodCheck').checked;
-    const c1 = document.getElementById('searchC1').value;
-    const ev = document.getElementById('searchEvent').value;
-    const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
-    const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
-    const resDiv = document.getElementById('searchResult');
-    const searchFilters = document.getElementById('searchFilters');
-    const showShortcuts = document.getElementById('shortcutToggle').checked;
-    
-    resDiv.innerHTML = '';
-    
-    if (isFresh) {
-        document.getElementById('searchC1').style.display = 'none';
-        document.getElementById('searchEvent').style.display = 'none';
-        document.getElementById('searchKeyword2').style.display = 'none';
-        searchFilters.style.display = 'block';
-
-        if (kw1.length < 1) {
-            document.getElementById('searchCount').innerText = '請輸入鮮食名稱進行搜尋...';
-            return;
-        }
-    } else {
-        document.getElementById('searchC1').style.display = 'block';
-        document.getElementById('searchEvent').style.display = 'block';
-        document.getElementById('searchKeyword2').style.display = 'block';
-        searchFilters.style.display = 'block';
-
-        if (kw1.length < 1 && kw2.length < 1 && !c1 && !ev) {
-            document.getElementById('searchCount').innerText = '輸入關鍵字或選擇篩選項目...';
-            return;
-        }
-    }
-
-    let filtered = db.filter(item => {
+    function renderSearch() {
+        const isFresh = document.getElementById('freshFoodCheck').checked;
+        const c1 = document.getElementById('searchC1').value;
+        const ev = document.getElementById('searchEvent').value;
+        const kw1 = document.getElementById('searchKeyword1').value.trim().toLowerCase();
+        const kw2 = document.getElementById('searchKeyword2').value.trim().toLowerCase();
+        const resDiv = document.getElementById('searchResult');
+        const searchFilters = document.getElementById('searchFilters');
+        const showShortcuts = document.getElementById('shortcutToggle').checked;
+        
+        resDiv.innerHTML = '';
+        
         if (isFresh) {
-            if (item.Type !== 'I24' && item.Type !== 'I35') return false;
-            const match1 = kw1 ? item.Name.toLowerCase().includes(kw1) : true;
-            const match2 = kw2 ? item.Name.toLowerCase().includes(kw2) : true;
-            return (kw1 || kw2) && match1 && match2;
-        } else {
-            if (c1 && item.C1 !== c1) return false;
-            if (ev && !item.Event.split('/').some(e => e.replace(/_\d{3}$/, '') === ev)) return false;
-            
-            let textMatch = (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
-                            (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
-            return textMatch;
-        }
-    });
-
-    if (ev && !isFresh) {
-        filtered.sort((a, b) => {
-            const evA = a.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
-            const evB = b.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
-            const seqA = evA.match(/_(\d{3})$/) ? parseInt(evA.match(/_(\d{3})$/)[1], 10) : 999;
-            const seqB = evB.match(/_(\d{3})$/) ? parseInt(evB.match(/_(\d{3})$/)[1], 10) : 999;
-            return seqA - seqB;
-        });
-    }
-
-    // 更新顯示數量上限為 52
-    document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 52 ? '52+' : filtered.length} (顯示上限52筆)`;
-    filtered = filtered.slice(0, 52);
-
-    // 🔥 建立 RWD 網格容器
-    const gridContainer = document.createElement('div');
-    gridContainer.className = 'search-grid-container';
-    resDiv.appendChild(gridContainer);
-
-    // 🔥 分成四組，每組 13 個 (達成 1->2->3->4 直列排序)
-    for (let i = 0; i < 4; i++) {
-        const chunk = filtered.slice(i * 13, (i + 1) * 13);
-        if (chunk.length === 0 && i > 0) break;
-
-        const columnDiv = document.createElement('div');
-        columnDiv.className = 'search-column';
-        gridContainer.appendChild(columnDiv);
-
-        chunk.forEach((item, chunkIdx) => {
-            const globalIdx = (i * 13) + chunkIdx; // 確保 ID 唯一
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            if (isFresh) {
-                card.innerHTML = `
-                    <div class="card-title">${item.Name} (${item.Type})</div>
-                    <div class="card-actions no-print">
-                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${globalIdx}')">今日到期</button>
-                        <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${globalIdx}')">明日到期</button>
-                        ${item.Type === 'I35' ? `
-                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${globalIdx}')">一配</button>
-                            <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${globalIdx}')">二配</button>
-                        ` : ''}
-                    </div>
-                    <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
-                `;
-            } else {
-                const hideNormalShortcuts = !isFresh && !showShortcuts;
-                card.innerHTML = `
-                    <div class="card-title">${item.Name}</div>
-                    <div class="card-sub">${item.C1} | ${item.Event}</div>
-                    <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
-                    <div class="card-actions no-print" style="display: ${hideNormalShortcuts ? 'none' : 'flex'};">
-                        <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
-                        <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
-                        <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
-                        <button class="btn-danger" onclick="actionCard('${item.ID}', 'delete')">🗑️刪除</button>
-                        <button class="btn-lightblue" onclick="actionCard('${item.ID}', 'lock')">${item.Locked === 'True' ? '🔓解鎖' : '🔒鎖定'}</button>
-                    </div>
-                `;
+            document.getElementById('searchC1').style.display = 'none';
+            document.getElementById('searchEvent').style.display = 'none';
+            document.getElementById('searchKeyword2').style.display = 'none';
+            searchFilters.style.display = 'block';
+            if (kw1.length < 1) {
+                document.getElementById('searchCount').innerText = '請輸入鮮食名稱進行搜尋...';
+                return;
             }
-            columnDiv.appendChild(card);
-            if (!isFresh) renderBarcode(`bc_${globalIdx}`, item.ID, item.Type);
+        } else {
+            document.getElementById('searchC1').style.display = 'block';
+            document.getElementById('searchEvent').style.display = 'block';
+            document.getElementById('searchKeyword2').style.display = 'block';
+            searchFilters.style.display = 'block';
+            if (kw1.length < 1 && kw2.length < 1 && !c1 && !ev) {
+                document.getElementById('searchCount').innerText = '輸入關鍵字或選擇篩選項目...';
+                return;
+            }
+        }
+
+        let filtered = db.filter(item => {
+            if (isFresh) {
+                if (item.Type !== 'I24' && item.Type !== 'I35') return false;
+                const match1 = kw1 ? item.Name.toLowerCase().includes(kw1) : true;
+                const match2 = kw2 ? item.Name.toLowerCase().includes(kw2) : true;
+                return (kw1 || kw2) && match1 && match2;
+            } else {
+                if (c1 && item.C1 !== c1) return false;
+                if (ev && !item.Event.split('/').some(e => e.replace(/_\d{3}$/, '') === ev)) return false;
+                let textMatch = (kw1 === '' || item.ID.toLowerCase().includes(kw1) || item.Name.toLowerCase().includes(kw1)) &&
+                                (kw2 === '' || item.ID.toLowerCase().includes(kw2) || item.Name.toLowerCase().includes(kw2));
+                return textMatch;
+            }
         });
+
+        if (ev && !isFresh) {
+            filtered.sort((a, b) => {
+                const evA = a.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
+                const evB = b.Event.split('/').find(e => e.replace(/_\d{3}$/, '') === ev) || '';
+                const seqA = evA.match(/_(\d{3})$/) ? parseInt(evA.match(/_(\d{3})$/)[1], 10) : 999;
+                const seqB = evB.match(/_(\d{3})$/) ? parseInt(evB.match(/_(\d{3})$/)[1], 10) : 999;
+                return seqA - seqB;
+            });
+        }
+
+        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 52 ? '52+' : filtered.length} (顯示上限52筆)`;
+        filtered = filtered.slice(0, 52);
+
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'search-grid-container';
+        resDiv.appendChild(gridContainer);
+
+        // 分成四組，每組13個
+        for (let i = 0; i < 4; i++) {
+            const chunk = filtered.slice(i * 13, (i + 1) * 13);
+            if (chunk.length === 0 && i > 0) break;
+
+            const columnDiv = document.createElement('div');
+            columnDiv.className = 'search-column';
+            gridContainer.appendChild(columnDiv);
+
+            chunk.forEach((item, chunkIdx) => {
+                const globalIdx = (i * 13) + chunkIdx;
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                if (isFresh) {
+                    card.innerHTML = `
+                        <div class="card-title">${item.Name} (${item.Type})</div>
+                        <div class="card-actions no-print">
+                            <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 1, 'bc_${globalIdx}')">今日到期</button>
+                            <button class="btn-warning" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 1, 1, 'bc_${globalIdx}')">明日到期</button>
+                            ${item.Type === 'I35' ? `
+                                <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 3, 'bc_${globalIdx}')">一配</button>
+                                <button class="btn-primary" onclick="showFreshBarcode('${item.ID}', '${item.Type}', 0, 5, 'bc_${globalIdx}')">二配</button>
+                            ` : ''}
+                        </div>
+                        <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
+                    `;
+                } else {
+                    const hideNormalShortcuts = !isFresh && !showShortcuts;
+                    card.innerHTML = `
+                        <div class="card-title">${item.Name}</div>
+                        <div class="card-sub">${item.C1} | ${item.Event}</div>
+                        <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
+                        <div class="card-actions no-print" style="display: ${hideNormalShortcuts ? 'none' : 'flex'};">
+                            <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
+                            <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
+                            <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
+                            <button class="btn-danger" onclick="actionCard('${item.ID}', 'delete')">🗑️刪除</button>
+                            <button class="btn-lightblue" onclick="actionCard('${item.ID}', 'lock')">${item.Locked === 'True' ? '🔓解鎖' : '🔒鎖定'}</button>
+                        </div>
+                    `;
+                }
+                columnDiv.appendChild(card);
+                if (!isFresh) renderBarcode(`bc_${globalIdx}`, item.ID, item.Type);
+            });
+        }
     }
-}
+
+    function actionCard(id, action) {
+        let item = db.find(i => i.ID === id);
+        if (!item) return;
+        if (action === 'delete') {
+            if (confirm(`確定刪除 ${item.Name}？`)) {
+                db = db.filter(i => i.ID !== id);
+                saveData(); renderSearch();
+            }
+        } else if (action === 'lock') {
+            item.Locked = item.Locked === 'True' ? 'False' : 'True';
+            saveData(); renderSearch();
+        } else if (action === 'order') {
+            let evArr = item.Event ? item.Event.split('/').filter(Boolean) : [];
+            if (!evArr.includes('待訂貨')) evArr.push('待訂貨');
+            item.Event = evArr.join('/');
+            saveData(); renderSearch();
+        } else if (action === 'reclassify') {
+            const c1s = [...new Set(db.map(i=>i.C1).filter(Boolean))].sort((a,b) => a.localeCompare(b,'zh-TW'));
+            let opts = c1s.map(c => `<option value="${c}">${c}</option>`).join('');
+            let newC1 = prompt(`目前分類：${item.C1}\n輸入新分類名稱，或留空選擇現有分類`);
+            if (newC1 !== null) {
+                item.C1 = newC1.trim() || item.C1;
+                saveData(); renderSearch();
+            }
+        } else if (action === 'qa') {
+            const picker = document.getElementById('hiddenDatePicker');
+            picker.onchange = function() {
+                if (picker.value) {
+                    const dateStr = picker.value.replace(/-/g, '');
+                    let expArr = item.Expiry ? item.Expiry.split('/').filter(Boolean) : [];
+                    if (!expArr.includes(dateStr)) expArr.push(dateStr);
+                    item.Expiry = cleanArrayStr(expArr.join('/'), true);
+                    saveData(); renderSearch();
+                }
+                picker.onchange = null;
+            };
+            picker.click();
+        }
+    }
+
     // --- 3. 勘誤頁面 ---
     function renderError() {
         const idGroups = {};
@@ -766,10 +736,8 @@ function renderSearch() {
             if(!idGroups[item.ID]) idGroups[item.ID] = [];
             idGroups[item.ID].push(item);
         });
-        
         const conflicts = [];
         let totalDupItems = 0; let totalDupBatches = 0;
-        
         for (const [id, group] of Object.entries(idGroups)) {
             if (group.length > 1) {
                 totalDupItems += group.length; totalDupBatches++;
@@ -781,16 +749,13 @@ function renderSearch() {
                 }
             }
         }
-        
         document.getElementById('errorStats').innerText = `總重複筆數: ${totalDupItems} | 總批數: ${totalDupBatches}`;
         const res = document.getElementById('errorResult');
         res.innerHTML = '';
-        
         conflicts.forEach(c => {
             const card = document.createElement('div');
             card.className = 'card';
             let html = `<div class="card-title">ID: ${c.id}</div>`;
-            
             ['types', 'names', 'c1s'].forEach((cat, idx) => {
                 let colorClass = idx === 0 ? 'btn-pink' : (idx === 1 ? 'btn-yellow' : 'btn-lightblue');
                 html += `<div class="card-actions">`;
@@ -799,8 +764,6 @@ function renderSearch() {
                 });
                 html += `</div>`;
             });
-            
-            // Check if ready to merge (all cats have 1 unique value)
             if (c.types.length === 1 && c.names.length === 1 && c.c1s.length === 1) {
                 html += `<div class="card-actions" style="margin-top:15px;"><button class="btn-primary" style="width:100%" onclick="mergeConflict('${c.id}')">🔒鎖定合併</button></div>`;
             }
@@ -823,101 +786,78 @@ function renderSearch() {
         let master = group[0];
         let allExpiry = group.map(i => i.Expiry).join('/');
         let allEvent = group.map(i => i.Event).join('/');
-        
         master.Expiry = cleanArrayStr(allExpiry, true);
         master.Event = cleanArrayStr(allEvent, false, master.Name, master.ID);
         master.Locked = 'True';
-        
-        // Remove others
         db = db.filter(i => i.ID !== id);
         db.push(master);
         saveData(); renderError();
     }
 
     // --- 4. 品保頁面 ---
-function renderQA() {
-    const showBc = document.getElementById('qaBarcodeToggle').checked;
-    const resDiv = document.getElementById('qaResult');
-    resDiv.innerHTML = '';
-    
-    // 1. 更精準的月份計算 (解決年底跨年的 Bug)
-    const now = new Date();
-    const currentYearMonth = now.getFullYear() * 100 + (now.getMonth() + 1); // 當月 (ex: 202604)
-
-    const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const nextYearMonth = nextMonthDate.getFullYear() * 100 + (nextMonthDate.getMonth() + 1); // 次月 (ex: 202605)
-
-    const expMap = {}; // { '20260315': [items] }
-    db.forEach(item => {
-        if(item.Expiry) {
-            item.Expiry.split('/').forEach(d => {
-                if(d) {
-                    if(!expMap[d]) expMap[d] = [];
-                    expMap[d].push(item);
-                }
-            });
-        }
-    });
-
-    Object.keys(expMap).sort().forEach(date => {
-        const ym = parseInt(date.substring(0, 6));
-        
-        // 2. 移除原本的 return 限制，並套用新的紅、橘、黃三色邏輯
-        let bgClass = '';
-        if (ym <= currentYearMonth) {
-            bgClass = 'bg-month-current';   // 當月及已過期：紅
-        } else if (ym === nextYearMonth) {
-            bgClass = 'bg-month-next';      // 次月：橘
-        } else {
-            bgClass = 'bg-month-future';    // 未來月份：黃
-        }
-
-        // 3. 調整 HTML 結構：將整個日期的群組包裝，以利列印時的 4 欄排版
-        const groupDiv = document.createElement('div');
-        // 螢幕上為了區分群組，給外層加上背景色與基礎樣式
-        groupDiv.className = `qa-group ${bgClass}`; 
-        groupDiv.style.padding = "10px";
-        groupDiv.style.borderRadius = "8px";
-        groupDiv.style.marginBottom = "15px";
-        groupDiv.style.border = "1px solid #ddd";
-
-        // 群組標題與全批下架按鈕 (保留原本功能)
-        let html = `
-            <div class="qa-group-title flex-row" style="margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 5px;">
-                <span style="font-weight: bold; font-size: 1.1em;">到期日: ${date}</span>
-                <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
-            </div>
-            <div class="qa-items-container ">
-        `;
-        
-        // 4. 每個商品變成獨立卡片 (配合列印時的 column-count)
-        expMap[date].forEach((item, idx) => {
-            let svgId = `qa_${date}_${idx}`;
-            html += `
-                <div class="card" style="background: rgba(255,255,255,0.7); margin-bottom: 8px;">
-                    <div class="flex-row no-print" style="margin-bottom: 5px;">
-                        <span style="flex:1;"></span>
-                        <button class="btn-warning" style="flex:0; padding:2px 8px; font-size:12px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
-                    </div>
-                    
-                    <div class="card-title">${item.Name}</div>
-                    ${showBc ? `<div style="text-align:center; width:100%;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                </div>
-            `;
+    function renderQA() {
+        const showBc = document.getElementById('qaBarcodeToggle').checked;
+        const resDiv = document.getElementById('qaResult');
+        resDiv.innerHTML = '';
+        const now = new Date();
+        const currentYearMonth = now.getFullYear() * 100 + (now.getMonth() + 1);
+        const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const nextYearMonth = nextMonthDate.getFullYear() * 100 + (nextMonthDate.getMonth() + 1);
+        const expMap = {};
+        db.forEach(item => {
+            if(item.Expiry) {
+                item.Expiry.split('/').forEach(d => {
+                    if(d) {
+                        if(!expMap[d]) expMap[d] = [];
+                        expMap[d].push(item);
+                    }
+                });
+            }
         });
-        
-        html += `</div>`; // 結束 qa-items-container
-        groupDiv.innerHTML = html;
-        resDiv.appendChild(groupDiv);
-        
-        // 渲染條碼
-        if(showBc) {
+        Object.keys(expMap).sort().forEach(date => {
+            const ym = parseInt(date.substring(0, 6));
+            let bgClass = '';
+            if (ym <= currentYearMonth) bgClass = 'bg-month-current';
+            else if (ym === nextYearMonth) bgClass = 'bg-month-next';
+            else bgClass = 'bg-month-future';
+
+            const groupDiv = document.createElement('div');
+            groupDiv.className = `qa-group ${bgClass}`;
+            groupDiv.style.padding = "10px";
+            groupDiv.style.borderRadius = "8px";
+            groupDiv.style.marginBottom = "15px";
+            groupDiv.style.border = "1px solid #ddd";
+            let html = `
+                <div class="qa-group-title flex-row" style="margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 5px;">
+                    <span style="font-weight: bold; font-size: 1.1em;">到期日: ${date}</span>
+                    <button class="btn-danger no-print" style="flex:0;" onclick="removeQA('${date}')">全批下架</button>
+                </div>
+                <div class="qa-items-container">
+            `;
             expMap[date].forEach((item, idx) => {
-                renderBarcode(`qa_${date}_${idx}`, item.ID, item.Type);
+                let svgId = `qa_${date}_${idx}`;
+                html += `
+                    <div class="card" style="background: rgba(255,255,255,0.7); margin-bottom: 8px;">
+                        <div class="flex-row no-print" style="margin-bottom: 5px;">
+                            <span style="flex:1;"></span>
+                            <button class="btn-warning" style="flex:0; padding:2px 8px; font-size:12px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                        </div>
+                        <div class="card-title">${item.Name}</div>
+                        ${showBc ? `<div style="text-align:center; width:100%;"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                    </div>
+                `;
             });
-        }
-    });
-}
+            html += `</div>`;
+            groupDiv.innerHTML = html;
+            resDiv.appendChild(groupDiv);
+            if(showBc) {
+                expMap[date].forEach((item, idx) => {
+                    renderBarcode(`qa_${date}_${idx}`, item.ID, item.Type);
+                });
+            }
+        });
+    }
+
     function removeQA(date, itemId = null) {
         db.forEach(item => {
             if (!itemId || item.ID === itemId) {
@@ -931,14 +871,11 @@ function renderQA() {
 
     // --- 5. 分類頁面 ---
     function renderClassify() {
-        // 抓出所有不重複的 C1，過濾掉空值後，使用 localeCompare 排序
         const c1s = [...new Set(db.map(i=>i.C1).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-TW'));
         const sel = document.getElementById('classifySelect');
-        
         sel.innerHTML = `<option value="">選擇分類</option><option value="NEW_CATEGORY">-- 新增分類 --</option>`;
         c1s.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
         document.getElementById('newCategoryInput').style.display = 'none';
-        
         const res = document.getElementById('classifyResult');
         let unclass = db.filter(i => i.C1 === '未分類').slice(0, 50);
         let html = '';
@@ -950,7 +887,6 @@ function renderQA() {
         });
         res.innerHTML = html;
     }
-
 
     function handleClassifySelect() {
         if(document.getElementById('classifySelect').value === 'NEW_CATEGORY') {
@@ -964,24 +900,18 @@ function renderQA() {
         let targetC1 = document.getElementById('classifySelect').value;
         if (targetC1 === 'NEW_CATEGORY') targetC1 = document.getElementById('newCategoryInput').value.trim();
         if (!targetC1) return alert("請輸入或選擇分類");
-
         const checkedIds = Array.from(document.querySelectorAll('.class-chk:checked')).map(cb => cb.value);
         if(!checkedIds.length) return alert("請勾選項目");
-
-        db.forEach(item => {
-            if(checkedIds.includes(item.ID)) item.C1 = targetC1;
-        });
+        db.forEach(item => { if(checkedIds.includes(item.ID)) item.C1 = targetC1; });
         saveData(); renderClassify();
     }
 
     // --- 6. 活動頁面 ---
-        function renderActivity() {
+    function renderActivity() {
         const events = new Set();
-        // 收集標籤時拔除序號
         db.forEach(i => i.Event.split('/').forEach(e => { 
             if(e) events.add(e.replace(/_\d{3}$/, '')); 
         }));
-        
         const tagsDiv = document.getElementById('activityTags');
         tagsDiv.innerHTML = '';
         events.forEach(cleanName => {
@@ -990,7 +920,6 @@ function renderQA() {
             btn.onclick = () => {
                 if(confirm(`清除所有「${cleanName}」活動標籤？`)) {
                     db.forEach(item => {
-                        // 刪除時，過濾掉所有「拔除序號後」等於該名稱的標籤
                         item.Event = item.Event.split('/').filter(ev => ev.replace(/_\d{3}$/, '') !== cleanName).join('/');
                     });
                     saveData(); renderActivity();
@@ -1000,135 +929,90 @@ function renderQA() {
         });
     }
 
-
     function searchActivity() {
-    // 1. 對應你的 HTML ID: activitySearch
-    const inputElement = document.getElementById('activitySearch');
-    const resDiv = document.getElementById('activitySearchResult');
-    
-    if (!inputElement || !resDiv) return;
-
-    const inputText = inputElement.value.trim();
-    
-    // 如果輸入框是空的，清空結果區域並離開
-    if (!inputText) {
-        resDiv.innerHTML = '';
-        return;
-    }
-
-    // 2. 解析輸入內容
-    const lines = inputText.split('\n').map(line => line.trim()).filter(Boolean);
-    
-    let foundItems = [];
-    let missingItems = [];
-
-    // 3. 比對資料庫 (假設你的資料庫變數名稱是 db)
-    lines.forEach(keyword => {
-        const lowerKW = keyword.toLowerCase(); // 轉小寫，增加搜尋成功率
-        
-        // 關鍵修改：使用 .includes() 進行模糊比對
-        // 只要 ID 包含關鍵字，或者 Name 包含關鍵字，就算找到！
-        let match = db.find(item => 
-            (item.ID && item.ID.toLowerCase().includes(lowerKW)) || 
-            (item.Name && item.Name.toLowerCase().includes(lowerKW))
-        );
-        
-        if (match) {
-            foundItems.push(match);
-        } else {
-            missingItems.push(keyword);
-        }
-    });
-
-
-    // 4. 開始渲染畫面
-    resDiv.innerHTML = ''; // 清空舊內容
-
-    // 渲染「有找到」的項目 (以簡單列表顯示，方便查看)
-    if (foundItems.length > 0) {
-        const foundTitle = document.createElement('div');
-        foundTitle.style.fontWeight = 'bold';
-        foundTitle.style.color = '#28a745';
-        foundTitle.style.marginTop = '10px';
-        foundTitle.innerText = `✅ 已找到 (${foundItems.length} 筆)：`;
-        resDiv.appendChild(foundTitle);
-
-        foundItems.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.style.padding = '5px';
-            itemDiv.style.borderBottom = '1px solid #eee';
-            itemDiv.innerText = `${item.ID} - ${item.Name} (${item.C1})`;
-            resDiv.appendChild(itemDiv);
+        const inputElement = document.getElementById('activitySearch');
+        const resDiv = document.getElementById('activitySearchResult');
+        if (!inputElement || !resDiv) return;
+        const inputText = inputElement.value.trim();
+        if (!inputText) { resDiv.innerHTML = ''; return; }
+        const lines = inputText.split('\n').map(line => line.trim()).filter(Boolean);
+        let foundItems = [], missingItems = [];
+        lines.forEach(keyword => {
+            const lowerKW = keyword.toLowerCase();
+            let match = db.find(item => 
+                (item.ID && item.ID.toLowerCase().includes(lowerKW)) || 
+                (item.Name && item.Name.toLowerCase().includes(lowerKW))
+            );
+            if (match) foundItems.push(match);
+            else missingItems.push(keyword);
         });
-    }
+        resDiv.innerHTML = '';
+        if (foundItems.length > 0) {
+            const foundTitle = document.createElement('div');
+            foundTitle.style.fontWeight = 'bold';
+            foundTitle.style.color = '#28a745';
+            foundTitle.style.marginTop = '10px';
+            foundTitle.innerText = `✅ 已找到 (${foundItems.length} 筆)：`;
+            resDiv.appendChild(foundTitle);
+            foundItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.style.padding = '5px';
+                itemDiv.style.borderBottom = '1px solid #eee';
+                itemDiv.innerText = `${item.ID} - ${item.Name} (${item.C1})`;
+                resDiv.appendChild(itemDiv);
+            });
+        }
+        if (missingItems.length > 0) {
+            const missingContainer = document.createElement('div');
+            missingContainer.style.marginTop = '15px';
+            missingContainer.style.padding = '10px';
+            missingContainer.style.border = '1px solid #ff4d4f';
+            missingContainer.style.borderRadius = '4px';
+            missingContainer.style.backgroundColor = '#fff1f0';
+            missingContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #ff4d4f; font-weight: bold;">❌ 未搜尋到 (${missingItems.length} 筆)：</span>
+                    <button onclick="copyMissingToClipboard()" style="font-size: 12px; padding: 2px 8px; cursor: pointer;">一鍵複製</button>
+                </div>
+                <textarea id="missingItemsTextarea" readonly style="width: 100%; height: 100px; font-size: 12px; border: 1px solid #ffa39e; padding: 5px;">${missingItems.join('\n')}</textarea>
 
-    // 5. 渲染「未搜尋到」的集中清單 (這就是你要的排版)
-    if (missingItems.length > 0) {
-        const missingContainer = document.createElement('div');
-        missingContainer.style.marginTop = '15px';
-        missingContainer.style.padding = '10px';
-        missingContainer.style.border = '1px solid #ff4d4f';
-        missingContainer.style.borderRadius = '4px';
-        missingContainer.style.backgroundColor = '#fff1f0';
-
-        missingContainer.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="color: #ff4d4f; font-weight: bold;">❌ 未搜尋到 (${missingItems.length} 筆)：</span>
-                <button onclick="copyMissingToClipboard()" style="font-size: 12px; padding: 2px 8px; cursor: pointer;">一鍵複製</button>
-            </div>
-            <textarea id="missingItemsTextarea" readonly style="width: 100%; height: 100px; font-size: 12px; border: 1px solid #ffa39e; padding: 5px;">${missingItems.join('\n')}</textarea>
+```
         `;
         resDiv.appendChild(missingContainer);
     }
 }
 
-// 輔助函式：一鍵複製未找到的名單
 function copyMissingToClipboard() {
     const textArea = document.getElementById('missingItemsTextarea');
-    if (textArea) {
-        textArea.select();
-        document.execCommand('copy');
-        alert('未找到名單已複製！');
-    }
+    if (textArea) { textArea.select(); document.execCommand('copy'); alert('未找到名單已複製！'); }
 }
 
-
-        function addActivity() {
-        const evName = document.getElementById('activityInput').value.trim();
-        if(!evName) return alert('請輸入活動名稱');
-        const text = document.getElementById('activitySearch').value;
-        const keywords = text.split('\n').filter(k => k.trim());
-        
-        let added = 0;
-        let seq = 1; // 順序計數器
-
-        keywords.forEach(kw => {
-            // 找出符合的商品
-            let matches = db.filter(i => 
-                (i.Name && i.Name.toLowerCase().includes(kw.trim().toLowerCase())) || 
-                (i.ID && i.ID.toLowerCase().includes(kw.trim().toLowerCase()))
-            );
-
-            matches.forEach(item => {
-                // 防呆：先清除該商品身上「拔除序號後」與目前要加入的活動同名的舊標籤
-                item.Event = item.Event.split('/').filter(e => e.replace(/_\d{3}$/, '') !== evName).join('/');
-                
-                // 產生 _001, _002 格式的標籤
-                let seqStr = seq.toString().padStart(3, '0');
-                let newEv = `${evName}_${seqStr}`;
-                
-                item.Event = cleanArrayStr(`${item.Event}/${newEv}`, false, item.Name, item.ID);
-                added++;
-            });
-            
-            // 只要這個關鍵字有配對到商品，序號就加 1（確保同一行的多個商品共用同排序，下一行遞增）
-            if (matches.length > 0) seq++; 
+function addActivity() {
+    const evName = document.getElementById('activityInput').value.trim();
+    if(!evName) return alert('請輸入活動名稱');
+    const text = document.getElementById('activitySearch').value;
+    const keywords = text.split('\n').filter(k => k.trim());
+    let added = 0;
+    let seq = 1;
+    keywords.forEach(kw => {
+        let matches = db.filter(i => 
+            (i.Name && i.Name.toLowerCase().includes(kw.trim().toLowerCase())) || 
+            (i.ID && i.ID.toLowerCase().includes(kw.trim().toLowerCase()))
+        );
+        matches.forEach(item => {
+            item.Event = item.Event.split('/').filter(e => e.replace(/_\d{3}$/, '') !== evName).join('/');
+            let seqStr = seq.toString().padStart(3, '0');
+            let newEv = `${evName}_${seqStr}`;
+            item.Event = cleanArrayStr(`${item.Event}/${newEv}`, false, item.Name, item.ID);
+            added++;
         });
-        saveData();
-        alert(`已成功加入 ${added} 筆活動標籤`);
-        renderActivity();
-    }
-
+        if (matches.length > 0) seq++; 
+    });
+    saveData();
+    alert(`已成功加入 ${added} 筆活動標籤`);
+    renderActivity();
+}
+```
 
 </script>
 </body>
