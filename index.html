@@ -86,12 +86,11 @@
 .bg-month-future  { background-color: #ffffcc !important; } /* 淺黃 */
 @media print {
     /* --- 1. 基礎強制設定 --- */
-    @page {
-        size: A4;
-        margin: 8mm; /* 稍微縮小邊距，給 iPhone 緩衝空間 */
+    @page { 
+        size: A4; 
+        margin: 8mm; 
     }
-
-    /* 強制 iOS 顯示顏色與消除邊距 */
+    
     html, body {
         width: 100% !important;
         margin: 0 !important;
@@ -100,24 +99,32 @@
         print-color-adjust: exact !important;
     }
 
-    /* 隱藏所有干擾元素 */
     header, .no-print, button, .nav-buttons, .card-actions, input {
         display: none !important;
-        height: 0 !important;
-        visibility: hidden !important;
     }
 
-    /* --- 2. 搜尋頁面：強制 4 欄並排 (使用 Float 確保相容) --- */
+    /* 🔥 隱藏 C1、Event 與次要資訊 🔥 */
+    /* 假設你的 C1/Event 放在 .card-sub 中，若有特定 class 請自行補上 */
+    #search.active .card-sub, 
+    #qa.active .card-sub { 
+        display: none !important; 
+    }
+
+
+    /* --- 2. 搜尋頁面：恢復直列式排序 (垂直流向 1->2->3->4) --- */
     #search.active #searchResult {
         display: block !important;
+        column-count: 4 !important; /* 恢復四欄垂直排序 */
+        column-gap: 8px !important;
         width: 100% !important;
     }
 
     #search.active .card {
-        float: left !important; /* 使用浮動而非 column-count */
-        width: calc(25% - 8px) !important; /* 精確計算 4 欄 */
-        margin: 4px !important;
-        height: 115px !important;
+        display: inline-block !important; /* 配合 column-count 防斷行 */
+        width: 100% !important; 
+        margin-bottom: 5px !important;
+        padding: 4px !important;
+        height: 80px !important; /* 🔥 高度從 115px 狂砍到 80px */
         border: 1px solid #999 !important;
         box-sizing: border-box !important;
         text-align: center !important;
@@ -125,55 +132,57 @@
         -webkit-column-break-inside: avoid !important;
     }
 
-    /* --- 3. 品保頁面：半版名片 + 內雙排 (最終防禦邏輯) --- */
+
+    /* --- 3. 品保頁面：半版名片 + 內雙排直列 --- */
     #qa.active #qaResult {
         display: block !important;
         width: 100% !important;
     }
 
-    /* 到期日大名片：左右半版 */
+    /* 到期日大名片：維持 Float 確保 iOS 左右半版不崩潰 */
     #qa.active .qa-group {
         display: block !important;
-        float: left !important; /* 強制浮動並排 */
-        width: calc(50% - 10px) !important; /* 精確半版 */
-        margin: 5px !important;
-        padding: 5px !important;
+        float: left !important;
+        width: calc(50% - 8px) !important; 
+        margin: 4px !important;
+        padding: 4px !important; /* 壓縮內距 */
         border: 2px solid #333 !important;
         border-radius: 6px !important;
         box-sizing: border-box !important;
         page-break-inside: avoid !important;
-        min-height: 120px;
     }
 
-    /* 到期日標題 */
     #qa.active .qa-group-title {
         width: 100% !important;
         font-weight: bold !important;
         font-size: 13px !important;
         text-align: center !important;
         border-bottom: 2px solid #333 !important;
-        margin-bottom: 6px !important;
-        padding-bottom: 3px !important;
+        margin-bottom: 4px !important; /* 逼近下方商品 */
+        padding-bottom: 2px !important;
     }
 
-    /* 內部單品容器：為了讓內部也能排兩排 */
+    /* 內部單品容器：內部採用雙欄直列排序 */
     #qa.active .qa-items-container {
         display: block !important;
+        column-count: 2 !important; /* 內部垂直流向 1->2->3->4 */
+        column-gap: 4px !important;
         width: 100% !important;
         clear: both;
     }
 
-    /* 單品小名片：在大名片內佔 1/2 寬度 */
+    /* 單品小名片 */
     #qa.active .qa-group .card {
-        display: block !important;
-        float: left !important;
-        width: calc(50% - 4px) !important; /* 大名片內的再半版 */
-        margin: 2px !important;
-        padding: 4px !important;
-        height: 100px !important;
+        display: inline-block !important;
+        width: 100% !important;
+        margin-bottom: 4px !important;
+        padding: 2px !important;
+        height: 72px !important; /* 🔥 品保單品高度極致壓縮至 72px */
         border: 1px dashed #666 !important;
         box-sizing: border-box !important;
         text-align: center !important;
+        page-break-inside: avoid !important;
+        -webkit-column-break-inside: avoid !important;
     }
 
     /* 清除浮動防止跑版 */
@@ -183,11 +192,13 @@
         clear: both !important;
     }
 
-    /* --- 4. 內容細節調整 --- */
+
+    /* --- 4. 文字與條碼空間極致壓縮 --- */
     .card-title {
         font-size: 11px !important;
-        line-height: 1.2 !important;
-        height: 2.4em !important;
+        line-height: 1.1 !important;
+        height: 2.2em !important;
+        margin-bottom: 2px !important; /* 🔥 讓文字緊貼條碼 */
         overflow: hidden !important;
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
@@ -195,9 +206,10 @@
     }
 
     .card svg.barcode {
-        width: 90% !important;
-        height: 40px !important;
-        margin: 2px auto !important;
+        width: 95% !important;
+        height: 36px !important; /* 🔥 條碼高度微縮，節省垂直空間 */
+        margin: 0 auto !important; /* 🔥 消除所有外距，直接貼合名片底部 */
+        display: block !important;
     }
 
     /* 背景顏色補強 */
@@ -205,7 +217,6 @@
     .bg-month-next    { background-color: #ffe5b4 !important; }
     .bg-month-future  { background-color: #ffffcc !important; }
 }
-
 
 @media (max-width: 350px) {
     #searchResult {
