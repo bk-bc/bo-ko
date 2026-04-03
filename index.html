@@ -84,40 +84,42 @@
 .bg-month-current { background-color: #ffe6e6 !important; } /* 淺紅 */
 .bg-month-next    { background-color: #ffe5b4 !important; } /* 淺橘 */
 .bg-month-future  { background-color: #ffffcc !important; } /* 淺黃 */
-        @media print {
+@media print {
     /* =========================================
-       1. 全域列印設定
+       1. 全域列印設定 (隱藏非必要元素、頁邊距)
        ========================================= */
     @page {
         size: A4;
-        margin: 10mm;
+        margin: 10mm; /* 設定邊距，自動隱藏瀏覽器預設印出的「網頁標題」與「網址」 */
     }
 
     body { 
         background: white !important; 
         padding: 0 !important; 
         margin: 0 !important; 
-        -webkit-print-color-adjust: exact !important; 
+        -webkit-print-color-adjust: exact !important; /* 強制印出背景顏色 */
         print-color-adjust: exact !important;
     }
 
+    /* 隱藏不需要印出的導覽列、按鈕與輸入框 */
     header, .no-print, .nav-buttons, .card-actions, button, input, select, textarea {
         display: none !important;
     }
 
 
     /* =========================================
-       2. 「搜尋」專屬列印設定 (成功的 4 欄直排)
+       2. 「搜尋」專屬列印設定 (直行 4 欄，iOS 防跑版)
        ========================================= */
     #search.active #searchResult {
         display: block !important;
-        column-count: 4 !important; 
+        column-count: 4 !important; /* 維持直向 1->2->3->4 垂直排列 */
         column-gap: 8px !important; 
         width: 100% !important;
     }
 
+    /* 搜尋商品卡片 */
     #search.active .card {
-        display: inline-block !important; /* iOS 成功關鍵：不換行區塊 */
+        display: inline-block !important; /* iOS 防切斷核心：放棄 flex */
         width: 100% !important;           
         position: relative !important;    
         
@@ -131,9 +133,11 @@
         height: 110px !important;            
         box-sizing: border-box !important;
         background-color: transparent !important;
+        box-shadow: none !important;
         text-align: center !important;
     }
 
+    /* 搜尋商品名稱 (固定 2 行) */
     #search.active .card-title {
         font-size: 0.85em !important;
         line-height: 1.2 !important;
@@ -148,8 +152,12 @@
         word-break: break-all !important;
     }
 
-    #search.active .card-sub { display: none !important; }
+    /* 隱藏次要資訊 */
+    #search.active .card-sub { 
+        display: none !important; 
+    }
 
+    /* 搜尋條碼 */
     #search.active .card svg.barcode {
         display: block !important;
         height: 45px !important;
@@ -159,27 +167,28 @@
 
 
     /* =========================================
-       3. 「品保」專屬列印設定 (套用搜尋公式：雙層 column-count)
+       3. 「品保」專屬列印設定 (大名片包小名片，完美避開 iOS Bug)
        ========================================= */
     #qa.active .print-container {
         display: block !important;
         width: 100% !important;
     }
 
-    /* 第一層：到期日分左右兩半版 */
+    /* 最外層容器：讓到期日群組分左右兩邊 */
     #qa.active #qaResult {
-        display: block !important;
-        column-count: 2 !important; 
-        column-gap: 12px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
         width: 100% !important;
     }
 
-    /* 到期日大名片 */
+    /* 到期日大名片 (半版，佔據 49% 寬度) */
     #qa.active .qa-group {
-        display: inline-block !important; /* iOS 成功關鍵 */
-        width: 100% !important; /* 填滿一半版的寬度 */
+        width: 49% !important; 
+        display: flex !important;
+        flex-direction: column !important;
         margin-bottom: 12px !important;
-        border: 2px solid #444 !important; 
+        border: 2px solid #444 !important; /* 粗外框區分日期 */
         border-radius: 8px !important;
         padding: 6px !important;
         box-sizing: border-box !important;
@@ -189,6 +198,7 @@
         -webkit-column-break-inside: avoid !important;
     }
 
+    /* 到期日標題 */
     #qa.active .qa-group-title {
         display: block !important; 
         font-size: 14px !important;
@@ -199,38 +209,44 @@
         padding-bottom: 4px !important;
     }
 
-    /* 第二層：名片內部單品再切分兩排 */
+    /* 單品名片容器 (準備在半版名片內排雙排) */
     #qa.active .qa-items-container {
-        display: block !important;
-        column-count: 2 !important; 
-        column-gap: 6px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
         width: 100% !important;
+        gap: 0 !important; 
     }
 
-    /* 單品小名片 */
+    /* 單品小名片 (內部雙排，佔據內部 49% 寬度) */
     #qa.active .qa-group .card {
-        display: inline-block !important; /* iOS 成功關鍵 */
-        width: 100% !important; 
+        width: 49% !important; 
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        
+        border: 1px dashed #999 !important; /* 虛線內框 */
         margin-bottom: 6px !important;
         padding: 4px !important;
-        height: 105px !important; 
+        height: 105px !important; /* 固定像磚塊般整齊 */
         box-sizing: border-box !important;
         
-        border: 1px dashed #999 !important; 
-        background-color: rgba(255,255,255,0.4) !important; 
-        text-align: center !important;
+        background-color: rgba(255,255,255,0.4) !important; /* 微透明讓底色透出 */
+        box-shadow: none !important;
         
         break-inside: avoid !important;
         page-break-inside: avoid !important;
-        -webkit-column-break-inside: avoid !important;
     }
 
+    /* 品保商品名稱 (字體微縮，2行縮略) */
     #qa.active .card-title {
         font-size: 0.75em !important; 
         line-height: 1.2 !important;
         height: 2.4em !important;
         width: 100% !important;
-        margin: 0 auto 2px auto !important;
+        text-align: center !important;
+        margin-bottom: 2px !important;
         
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
@@ -239,17 +255,19 @@
         word-break: break-all !important;
     }
 
+    /* 品保商品條碼 */
     #qa.active .card svg.barcode {
         display: block !important;
         height: 38px !important; 
         max-width: 100% !important;
+        margin-top: auto !important;
         margin: 0 auto !important;
     }
 
-    /* 三色底色標示 */
-    #qa.active .bg-month-current { background-color: #ffcccc !important; }
-    #qa.active .bg-month-next    { background-color: #ffe5b4 !important; }
-    #qa.active .bg-month-future  { background-color: #ffffcc !important; }
+    /* 品保三色底色標示 */
+    #qa.active .bg-month-current { background-color: #ffcccc !important; } /* 當月淺紅 */
+    #qa.active .bg-month-next    { background-color: #ffe5b4 !important; } /* 次月淺橘 */
+    #qa.active .bg-month-future  { background-color: #ffffcc !important; } /* 未來淺黃 */
 }
 
 @media (max-width: 350px) {
