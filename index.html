@@ -312,8 +312,7 @@
                 height: auto !important;
             }
             #qaResult {
-                display: flex !important;
-                flex-direction: column !important;
+                display: block !important;
                 width: 100% !important;
                 transform: none !important;
                 margin: 0 !important;
@@ -324,14 +323,17 @@
                 align-items: flex-start !important;
                 gap: 5px !important;
                 width: 100% !important;
+                break-inside: avoid-page !important;
+                page-break-inside: avoid !important;
             }
-            /* iOS Safari 相容換頁：用獨立 div 強制換頁 */
+            /* iOS Safari：換頁 div 必須在 block 容器內才有效 */
             .qa-page-break {
                 display: block !important;
+                width: 100% !important;
                 height: 0 !important;
+                overflow: hidden !important;
                 page-break-after: always !important;
                 break-after: page !important;
-                -webkit-column-break-after: always !important;
             }
             .qa-col {
                 flex: 1 1 0 !important;
