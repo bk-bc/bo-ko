@@ -217,43 +217,6 @@
             max-height: 60px;
         }
 
-        /* 品保外層佈局 */
-        #qaResult {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            width: 100%;
-        }
-        @media (min-width: 900px) {
-            #qaResult { grid-template-columns: 1fr 1fr; }
-        }
-
-        .qa-group {
-            border: 2px solid #333;
-            border-radius: 6px;
-            padding: 6px;
-            background: #fff;
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-        .qa-group-title {
-            text-align: center;
-            font-weight: bold;
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 6px;
-            padding-bottom: 4px;
-        }
-        .qa-items-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-        }
-        .qa-items-container .card {
-            border: 1px dashed #666;
-            padding: 4px;
-            text-align: center;
-        }
-
         /* =============================================
            列印樣式
            ============================================= */
@@ -1118,7 +1081,7 @@
         // A4高297mm，上下各留10mm邊距 = 277mm
         // 列印時瀏覽器實際渲染DPI通常是96，但iOS Safari列印用的是CSS px
         // 1mm = 3.7795px（CSS標準），277mm = 1047px
-        const pageH = Math.floor(277 * 3.7795);
+        const pageH = Math.floor(277 * 3.7795 * 1.8);
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
