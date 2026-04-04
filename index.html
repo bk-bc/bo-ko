@@ -432,17 +432,9 @@
     </div>
 
     <div id="qa" class="section">
-        <div class="flex-row no-print" style="flex-wrap:wrap; gap:6px;">
+        <div class="flex-row no-print">
             <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
             <button class="btn-primary" onclick="window.print()">列印</button>
-        </div>
-        <!-- 診斷工具：顯示量測結果，找到正確pageH後可移除 -->
-        <div class="no-print" style="background:#f0f0f0; padding:8px; border-radius:6px; margin-bottom:8px; font-size:12px;">
-            <div style="margin-bottom:4px;">
-                pageH：<input type="number" id="pageHInput" value="1850" style="width:80px; padding:2px; margin:0 4px;">
-                <button onclick="applyPageH()" style="padding:2px 8px;">套用重算</button>
-            </div>
-            <div id="qaDebugInfo" style="color:#666; line-height:1.6;"></div>
         </div>
         <div id="qaResultWrapper">
             <div id="qaResult" class="print-container"></div>
@@ -1096,22 +1088,17 @@
         measureBox.innerHTML = '';
         document.body.removeChild(measureBox);
 
-        // ── 步驟3：以輸入框的pageH為基準分頁 ──
-        const pageHInput = document.getElementById('pageHInput');
-        const pageH = pageHInput ? parseInt(pageHInput.value) || 1850 : 1850;
-
-        // 診斷：顯示每個群組高度與累計
-        const debugEl = document.getElementById('qaDebugInfo');
-        if (debugEl) {
-            let debugHtml = `<b>測量盒寬：${PRINT_COL_WIDTH}px｜pageH：${pageH}px</b><br>`;
-            let cumH = 0;
-            heights.forEach((h, i) => {
-                cumH += h;
-                debugHtml += `群組${i+1}(${sortedDates[i]})：${h}px，累計：${cumH}px${cumH > pageH ? ' ← <span style="color:red">超過pageH，換欄</span>' : ''}<br>`;
-                if (cumH > pageH) cumH = h; // 重置累計
-            });
-            debugEl.innerHTML = debugHtml;
-        }
+        // ── 步驟3：自動量測 pageH ──
+        // 策略：把所有群組的高度加總，除以群組數得到平均高，
+        // 再用「總高 / 2欄」估算每頁可容納高度。
+        // 同時取螢幕實際可用高作為上限參考。
+        const totalH = heights.reduce((s, h) => s + h, 0);
+        // 螢幕可用高（減去 header 約 120px）
+        const screenPageH = window.innerHeight - 120;
+        // 以螢幕高為基準，乘以縮放比例換算回 730px 基準下的高度
+        const wrapperW = document.getElementById('qaResultWrapper').offsetWidth || window.innerWidth - 20;
+        const scaleRatio = 730 / wrapperW;
+        const pageH = Math.floor(screenPageH * scaleRatio);
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
@@ -1207,8 +1194,6 @@
         window.addEventListener('beforeprint', printHandler);
         window.addEventListener('afterprint',  afterHandler);
     }
-
-    function applyPageH() { renderQA(); }
 
     function removeQA(date, itemId = null) {
         db.forEach(item => {
