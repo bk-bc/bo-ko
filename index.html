@@ -79,29 +79,33 @@
         
         svg.barcode { width: 100%; max-height: 80px; }
 
-        /* 品保：動態多頁分欄 */
+        /* 品保：動態多頁分欄，基準為A4列印寬度 */
         .qa-print-container { display: none; }
         .qa-screen-container { display: block; }
 
-        /* 主容器：垂直堆疊每頁 */
+        /* 主容器：垂直堆疊每頁，寬度鎖定A4可用寬（730px），螢幕上置中 */
         #qaResult {
             display: flex;
             flex-direction: column;
             gap: 0;
-            width: 100%;
+            width: 730px;        /* A4可用寬，與列印基準一致 */
+            max-width: 100%;     /* 手機螢幕不夠寬時自動縮 */
+            margin: 0 auto;
         }
 
-        /* 每頁：左右兩欄並排 */
+        /* 每頁：左右兩欄並排，寬度固定 */
         .qa-page-row {
             display: flex;
             flex-direction: row;
             align-items: flex-start;
-            gap: 8px;
+            gap: 6px;
             width: 100%;
         }
 
+        /* 每欄固定362px（A4兩欄基準） */
         .qa-col {
-            flex: 1 1 0;
+            flex: 0 0 362px;
+            width: 362px;
             min-width: 0;
             display: flex;
             flex-direction: column;
@@ -331,6 +335,7 @@
                 display: flex !important;
                 flex-direction: column !important;
                 width: 100% !important;
+                margin: 0 !important;
             }
             .qa-page-row {
                 display: flex !important;
@@ -338,13 +343,14 @@
                 align-items: flex-start !important;
                 gap: 5px !important;
                 width: 100% !important;
-                page-break-after: always !important; /* 每頁之後強制換頁 */
+                page-break-after: always !important;
             }
             .qa-page-row:last-child {
                 page-break-after: auto !important;
             }
             .qa-col {
                 flex: 1 1 0 !important;
+                width: auto !important;
                 min-width: 0 !important;
             }
             .qa-group {
@@ -1072,12 +1078,13 @@
             return { groupDiv, date, dateIdx, leftItems, rightItems };
         }
 
-        // ── 步驟1：用實際容器寬度建立測量盒 ──
-        const containerWidth = resDiv.offsetWidth || window.innerWidth;
-        const colWidth = Math.floor((containerWidth - 8) / 2); // 兩欄，gap=8
+        // ── 步驟1：用A4列印寬度建立測量盒（固定基準，不受螢幕影響）──
+        // A4 = 210mm，@96dpi = 794px，扣掉兩側邊距約16mm = 730px可用
+        // 兩欄各半扣gap：(730 - 5) / 2 ≈ 362px
+        const PRINT_COL_WIDTH = 362;
 
         const measureBox = document.createElement('div');
-        measureBox.style.cssText = `position:fixed; visibility:hidden; pointer-events:none; width:${colWidth}px; left:-9999px; top:0; z-index:-1;`;
+        measureBox.style.cssText = `position:fixed; visibility:hidden; pointer-events:none; width:${PRINT_COL_WIDTH}px; left:-9999px; top:0; z-index:-1;`;
         document.body.appendChild(measureBox);
 
         // ── 步驟2：建立所有群組並量測高度 ──
@@ -1093,8 +1100,8 @@
         document.body.removeChild(measureBox);
 
         // ── 步驟3：多頁分欄，每頁左右各一欄 ──
-        // A4 可用高（螢幕量測用像素）：257mm * 96dpi/25.4 ≈ 972px
-        const pageH = Math.floor(257 * 96 / 25.4);
+        // A4可用高 = 297mm - 上下邊距約20mm = 277mm @96dpi ≈ 1048px
+        const pageH = Math.floor(277 * 96 / 25.4);
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
