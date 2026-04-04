@@ -106,7 +106,7 @@
             align-items: flex-start;
             gap: 6px;
             width: 730px;
-            margin-bottom: 16px;
+            margin-bottom: 60px;
         }
 
         /* 每欄固定362px */
@@ -1081,7 +1081,7 @@
         // A4高297mm，上下各留10mm邊距 = 277mm
         // 列印時瀏覽器實際渲染DPI通常是96，但iOS Safari列印用的是CSS px
         // 1mm = 3.7795px（CSS標準），277mm = 1047px
-        const pageH = Math.floor(277 * 3.7795 * 1.8);
+        const pageH = 1850;
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
