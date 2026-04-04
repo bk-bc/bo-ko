@@ -79,18 +79,27 @@
         
         svg.barcode { width: 100%; max-height: 80px; }
 
-        /* 品保：動態高度分欄，左欄滿一頁才流入右欄 */
+        /* 品保：動態多頁分欄 */
         .qa-print-container { display: none; }
         .qa-screen-container { display: block; }
 
-        /* 主容器：左右兩欄並排 */
+        /* 主容器：垂直堆疊每頁 */
         #qaResult {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            width: 100%;
+        }
+
+        /* 每頁：左右兩欄並排 */
+        .qa-page-row {
             display: flex;
             flex-direction: row;
             align-items: flex-start;
             gap: 8px;
             width: 100%;
         }
+
         .qa-col {
             flex: 1 1 0;
             min-width: 0;
@@ -320,10 +329,19 @@
 
             #qaResult {
                 display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+            .qa-page-row {
+                display: flex !important;
                 flex-direction: row !important;
                 align-items: flex-start !important;
-                gap: 6px !important;
+                gap: 5px !important;
                 width: 100% !important;
+                page-break-after: always !important; /* 每頁之後強制換頁 */
+            }
+            .qa-page-row:last-child {
+                page-break-after: auto !important;
             }
             .qa-col {
                 flex: 1 1 0 !important;
@@ -1004,14 +1022,8 @@
         const sortedDates = Object.keys(expMap).sort();
         if(sortedDates.length === 0) return;
 
-        // ── 步驟1：建立所有群組 DOM（先放進隱藏測量容器）──
-        const measureBox = document.createElement('div');
-        measureBox.style.cssText = 'position:absolute; visibility:hidden; width:50vw; left:-9999px; top:0;';
-        document.body.appendChild(measureBox);
-
-        const groupEls = []; // 儲存每個群組 DOM 與對應資料
-
-        sortedDates.forEach((date, dateIdx) => {
+        // ── 建立所有群組 DOM ──
+        function makeGroupEl(date, dateIdx) {
             const items = expMap[date];
             const ym = parseInt(date.substring(0, 6));
             let bgClass = '';
@@ -1021,9 +1033,7 @@
 
             const groupDiv = document.createElement('div');
             groupDiv.className = `qa-group ${bgClass}`;
-            groupDiv.style.marginBottom = '6px';
 
-            // 標題
             const titleDiv = document.createElement('div');
             titleDiv.className = 'qa-group-title';
             titleDiv.innerHTML = `
@@ -1032,7 +1042,6 @@
             `;
             groupDiv.appendChild(titleDiv);
 
-            // 商品兩小欄
             const itemsRow = document.createElement('div');
             itemsRow.className = 'qa-items-row';
             const itemHalf   = Math.ceil(items.length / 2);
@@ -1060,11 +1069,88 @@
             });
 
             groupDiv.appendChild(itemsRow);
-            measureBox.appendChild(groupDiv); // 先放進測量容器
-            groupEls.push({ groupDiv, date, dateIdx, items, leftItems, rightItems });
+            return { groupDiv, date, dateIdx, leftItems, rightItems };
+        }
+
+        // ── 步驟1：用實際容器寬度建立測量盒 ──
+        const containerWidth = resDiv.offsetWidth || window.innerWidth;
+        const colWidth = Math.floor((containerWidth - 8) / 2); // 兩欄，gap=8
+
+        const measureBox = document.createElement('div');
+        measureBox.style.cssText = `position:fixed; visibility:hidden; pointer-events:none; width:${colWidth}px; left:-9999px; top:0; z-index:-1;`;
+        document.body.appendChild(measureBox);
+
+        // ── 步驟2：建立所有群組並量測高度 ──
+        const groupEls = sortedDates.map((date, dateIdx) => makeGroupEl(date, dateIdx));
+
+        // 量測每個群組高度
+        const heights = groupEls.map(({ groupDiv }) => {
+            measureBox.innerHTML = '';
+            measureBox.appendChild(groupDiv.cloneNode(true));
+            return measureBox.firstChild.offsetHeight + 6; // +6 gap
         });
 
-        // ── 步驟2：渲染條碼（在測量容器中）──
+        document.body.removeChild(measureBox);
+
+        // ── 步驟3：多頁分欄，每頁左右各一欄 ──
+        // A4 可用高（螢幕量測用像素）：257mm * 96dpi/25.4 ≈ 972px
+        const pageH = Math.floor(257 * 96 / 25.4);
+
+        // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
+        const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
+        let curPage = { left: [], right: [] };
+        let leftH = 0, rightH = 0;
+        let fillingLeft = true;
+
+        groupEls.forEach((_, i) => {
+            const h = heights[i];
+            if (fillingLeft) {
+                if (leftH + h <= pageH) {
+                    curPage.left.push(i);
+                    leftH += h;
+                } else {
+                    // 左欄滿，切換到右欄
+                    fillingLeft = false;
+                    curPage.right.push(i);
+                    rightH += h;
+                }
+            } else {
+                if (rightH + h <= pageH) {
+                    curPage.right.push(i);
+                    rightH += h;
+                } else {
+                    // 右欄也滿，換新頁
+                    pages.push(curPage);
+                    curPage = { left: [i], right: [] };
+                    leftH = h;
+                    rightH = 0;
+                    fillingLeft = true;
+                }
+            }
+        });
+        pages.push(curPage); // 最後一頁
+
+        // ── 步驟4：渲染到畫面 ──
+        // qaResult 設為 flex-column，每頁一個 qa-page-row
+        pages.forEach((page, pageIdx) => {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'qa-page-row';
+            if (pageIdx > 0) pageDiv.style.marginTop = '20px';
+
+            const leftCol  = document.createElement('div');
+            leftCol.className  = 'qa-col';
+            const rightCol = document.createElement('div');
+            rightCol.className = 'qa-col';
+
+            page.left.forEach(i  => leftCol.appendChild(groupEls[i].groupDiv));
+            page.right.forEach(i => rightCol.appendChild(groupEls[i].groupDiv));
+
+            pageDiv.appendChild(leftCol);
+            pageDiv.appendChild(rightCol);
+            resDiv.appendChild(pageDiv);
+        });
+
+        // ── 步驟5：渲染條碼（DOM 已掛上）──
         if(showBc) {
             groupEls.forEach(({ date, dateIdx, leftItems, rightItems }) => {
                 leftItems.forEach((item, idx) => {
@@ -1076,40 +1162,6 @@
             });
         }
 
-        // ── 步驟3：量測每個群組高度，依頁高動態分左右欄 ──
-        // A4 可用高 ≈ 257mm，換算 px（螢幕96dpi：1mm≈3.7795px）
-        const pageH = 257 * 3.7795;
-        let leftH = 0;
-        let splitIdx = groupEls.length; // 預設全部放左欄
-
-        for (let i = 0; i < groupEls.length; i++) {
-            const h = groupEls[i].groupDiv.offsetHeight + 6; // +6 為 gap
-            if (leftH + h > pageH) {
-                splitIdx = i; // 從這個群組開始放右欄
-                break;
-            }
-            leftH += h;
-        }
-
-        // ── 步驟4：從測量容器取出，放進正式左右欄 ──
-        document.body.removeChild(measureBox);
-
-        const leftCol  = document.createElement('div');
-        leftCol.className  = 'qa-col';
-        const rightCol = document.createElement('div');
-        rightCol.className = 'qa-col';
-        resDiv.appendChild(leftCol);
-        resDiv.appendChild(rightCol);
-
-        groupEls.forEach(({ groupDiv }, i) => {
-            if (i < splitIdx) {
-                leftCol.appendChild(groupDiv);
-            } else {
-                rightCol.appendChild(groupDiv);
-            }
-        });
-
-        // 清除舊的 print 監聽
         if(window._qaPrintHandler) {
             window.removeEventListener('beforeprint', window._qaPrintHandler);
             window.removeEventListener('afterprint',  window._qaAfterHandler);
