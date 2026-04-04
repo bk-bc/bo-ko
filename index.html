@@ -106,7 +106,13 @@
             align-items: flex-start;
             gap: 6px;
             width: 730px;
-            margin-bottom: 60px;
+            margin-bottom: 0;
+        }
+
+        /* 頁間強制換頁符（螢幕顯示為空白間距，列印時強制換頁）*/
+        .qa-page-break {
+            width: 100%;
+            height: 60px;  /* 螢幕上的頁間距 */
         }
 
         /* 每欄固定362px */
@@ -318,11 +324,14 @@
                 align-items: flex-start !important;
                 gap: 5px !important;
                 width: 100% !important;
-                page-break-after: always !important;
-                margin-bottom: 0 !important;
             }
-            .qa-page-row:last-child {
-                page-break-after: auto !important;
+            /* iOS Safari 相容換頁：用獨立 div 強制換頁 */
+            .qa-page-break {
+                display: block !important;
+                height: 0 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                -webkit-column-break-after: always !important;
             }
             .qa-col {
                 flex: 1 1 0 !important;
@@ -421,9 +430,17 @@
     </div>
 
     <div id="qa" class="section">
-        <div class="flex-row no-print">
+        <div class="flex-row no-print" style="flex-wrap:wrap; gap:6px;">
             <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
             <button class="btn-primary" onclick="window.print()">列印</button>
+        </div>
+        <!-- 診斷工具：顯示量測結果，找到正確pageH後可移除 -->
+        <div class="no-print" style="background:#f0f0f0; padding:8px; border-radius:6px; margin-bottom:8px; font-size:12px;">
+            <div style="margin-bottom:4px;">
+                pageH：<input type="number" id="pageHInput" value="1850" style="width:80px; padding:2px; margin:0 4px;">
+                <button onclick="applyPageH()" style="padding:2px 8px;">套用重算</button>
+            </div>
+            <div id="qaDebugInfo" style="color:#666; line-height:1.6;"></div>
         </div>
         <div id="qaResultWrapper">
             <div id="qaResult" class="print-container"></div>
@@ -1077,11 +1094,22 @@
         measureBox.innerHTML = '';
         document.body.removeChild(measureBox);
 
-        // ── 步驟3：以A4實際列印高度為基準分頁 ──
-        // A4高297mm，上下各留10mm邊距 = 277mm
-        // 列印時瀏覽器實際渲染DPI通常是96，但iOS Safari列印用的是CSS px
-        // 1mm = 3.7795px（CSS標準），277mm = 1047px
-        const pageH = 1850;
+        // ── 步驟3：以輸入框的pageH為基準分頁 ──
+        const pageHInput = document.getElementById('pageHInput');
+        const pageH = pageHInput ? parseInt(pageHInput.value) || 1850 : 1850;
+
+        // 診斷：顯示每個群組高度與累計
+        const debugEl = document.getElementById('qaDebugInfo');
+        if (debugEl) {
+            let debugHtml = `<b>測量盒寬：${PRINT_COL_WIDTH}px｜pageH：${pageH}px</b><br>`;
+            let cumH = 0;
+            heights.forEach((h, i) => {
+                cumH += h;
+                debugHtml += `群組${i+1}(${sortedDates[i]})：${h}px，累計：${cumH}px${cumH > pageH ? ' ← <span style="color:red">超過pageH，換欄</span>' : ''}<br>`;
+                if (cumH > pageH) cumH = h; // 重置累計
+            });
+            debugEl.innerHTML = debugHtml;
+        }
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
@@ -1120,9 +1148,15 @@
         // ── 步驟4：渲染到畫面 ──
         // qaResult 設為 flex-column，每頁一個 qa-page-row
         pages.forEach((page, pageIdx) => {
+            // 每頁前（除第一頁）插入強制換頁 div
+            if (pageIdx > 0) {
+                const breakDiv = document.createElement('div');
+                breakDiv.className = 'qa-page-break';
+                resDiv.appendChild(breakDiv);
+            }
+
             const pageDiv = document.createElement('div');
             pageDiv.className = 'qa-page-row';
-            if (pageIdx > 0) pageDiv.style.marginTop = '20px';
 
             const leftCol  = document.createElement('div');
             leftCol.className  = 'qa-col';
@@ -1171,6 +1205,8 @@
         window.addEventListener('beforeprint', printHandler);
         window.addEventListener('afterprint',  afterHandler);
     }
+
+    function applyPageH() { renderQA(); }
 
     function removeQA(date, itemId = null) {
         db.forEach(item => {
