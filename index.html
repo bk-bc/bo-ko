@@ -1088,17 +1088,8 @@
         measureBox.innerHTML = '';
         document.body.removeChild(measureBox);
 
-        // ── 步驟3：自動量測 pageH ──
-        // 策略：把所有群組的高度加總，除以群組數得到平均高，
-        // 再用「總高 / 2欄」估算每頁可容納高度。
-        // 同時取螢幕實際可用高作為上限參考。
-        const totalH = heights.reduce((s, h) => s + h, 0);
-        // 螢幕可用高（減去 header 約 120px）
-        const screenPageH = window.innerHeight - 120;
-        // 以螢幕高為基準，乘以縮放比例換算回 730px 基準下的高度
-        const wrapperW = document.getElementById('qaResultWrapper').offsetWidth || window.innerWidth - 20;
-        const scaleRatio = 730 / wrapperW;
-        const pageH = Math.floor(screenPageH * scaleRatio);
+        // ── 步驟3：pageH 固定 1000px（對應測量盒 362px 寬的實際渲染高度）──
+        const pageH = 1000;
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
