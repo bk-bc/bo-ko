@@ -79,32 +79,24 @@
         
         svg.barcode { width: 100%; max-height: 80px; }
 
-        /* 品保：單一DOM，每兩個群組一列並排 */
+        /* 品保：動態高度分欄，左欄滿一頁才流入右欄 */
         .qa-print-container { display: none; }
         .qa-screen-container { display: block; }
 
-        /* 主容器：垂直堆疊每一列 */
+        /* 主容器：左右兩欄並排 */
         #qaResult {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 8px;
+            width: 100%;
+        }
+        .qa-col {
+            flex: 1 1 0;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             gap: 6px;
-            width: 100%;
-        }
-
-        /* 每一列：兩個群組橫向並排 */
-        .qa-row {
-            display: flex;
-            flex-direction: row;
-            gap: 6px;
-            width: 100%;
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        /* 群組外框包裝，各佔50% */
-        .qa-group-wrapper {
-            flex: 1 1 0;
-            min-width: 0;
         }
 
         /* 每個日期群組 */
@@ -117,12 +109,10 @@
             page-break-inside: avoid;
             width: 100%;
             box-sizing: border-box;
-            height: 100%;
         }
         .qa-group-title {
             font-weight: bold;
             font-size: 0.9em;
-            text-align: center;
             border-bottom: 1px solid #ccc;
             margin-bottom: 5px;
             padding-bottom: 3px;
@@ -324,47 +314,35 @@
             }
 
             /* ══════════════════════════════════════════
-               品保列印：直接沿用螢幕佈局
-               每列(qa-row)兩個群組並排，不會被切斷
+               品保列印：直接沿用螢幕動態分欄佈局
                ══════════════════════════════════════════ */
             .qa-screen-container, .qa-print-container { display: none !important; }
 
             #qaResult {
                 display: flex !important;
-                flex-direction: column !important;
-                gap: 4px !important;
+                flex-direction: row !important;
+                align-items: flex-start !important;
+                gap: 6px !important;
                 width: 100% !important;
             }
-
-            /* 每列不允許跨頁切斷 */
-            .qa-row {
-                display: flex !important;
-                flex-direction: row !important;
-                gap: 4px !important;
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            .qa-group-wrapper {
+            .qa-col {
                 flex: 1 1 0 !important;
                 min-width: 0 !important;
             }
-
             .qa-group {
                 border: 1pt solid #333 !important;
                 border-radius: 2px !important;
                 padding: 3px !important;
+                margin-bottom: 4px !important;
                 box-shadow: none !important;
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
             }
-
             .qa-group-title {
                 font-size: 10px !important;
                 padding-bottom: 2px !important;
                 margin-bottom: 3px !important;
             }
-
             .qa-item-card {
                 border: 0.5pt dashed #666 !important;
                 padding: 2px !important;
@@ -372,13 +350,10 @@
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
             }
-
             .qa-item-title {
                 font-size: 14px !important;
             }
-
             .qa-item-actions { display: none !important; }
-
             .qa-item-card .barcode {
                 width: 95% !important;
                 height: 28px !important;
@@ -1029,99 +1004,110 @@
         const sortedDates = Object.keys(expMap).sort();
         if(sortedDates.length === 0) return;
 
-        // ── 每兩個群組組成一列（一行），並排顯示 ──
-        // 第1+2 → 第一列，第3+4 → 第二列，以此類推
-        for (let i = 0; i < sortedDates.length; i += 2) {
-            // 建立一個橫列容器，裝左右兩個群組
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'qa-row';
+        // ── 步驟1：建立所有群組 DOM（先放進隱藏測量容器）──
+        const measureBox = document.createElement('div');
+        measureBox.style.cssText = 'position:absolute; visibility:hidden; width:50vw; left:-9999px; top:0;';
+        document.body.appendChild(measureBox);
 
-            [0, 1].forEach(offset => {
-                const dateIdx = i + offset;
-                if (dateIdx >= sortedDates.length) {
-                    // 補一個空白佔位，讓左欄獨自一個時不會拉寬
-                    const emptyDiv = document.createElement('div');
-                    emptyDiv.className = 'qa-group-wrapper';
-                    rowDiv.appendChild(emptyDiv);
-                    return;
-                }
+        const groupEls = []; // 儲存每個群組 DOM 與對應資料
 
-                const date  = sortedDates[dateIdx];
-                const items = expMap[date];
-                const ym    = parseInt(date.substring(0, 6));
-                let bgClass = '';
-                if (ym <= currentYearMonth)    bgClass = 'bg-month-current';
-                else if (ym === nextYearMonth) bgClass = 'bg-month-next';
-                else                            bgClass = 'bg-month-future';
+        sortedDates.forEach((date, dateIdx) => {
+            const items = expMap[date];
+            const ym = parseInt(date.substring(0, 6));
+            let bgClass = '';
+            if (ym <= currentYearMonth)    bgClass = 'bg-month-current';
+            else if (ym === nextYearMonth) bgClass = 'bg-month-next';
+            else                            bgClass = 'bg-month-future';
 
-                // 群組外框
-                const wrapDiv = document.createElement('div');
-                wrapDiv.className = 'qa-group-wrapper';
+            const groupDiv = document.createElement('div');
+            groupDiv.className = `qa-group ${bgClass}`;
+            groupDiv.style.marginBottom = '6px';
 
-                const groupDiv = document.createElement('div');
-                groupDiv.className = `qa-group ${bgClass}`;
+            // 標題
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'qa-group-title';
+            titleDiv.innerHTML = `
+                <span>到期日: ${date}</span>
+                <button class="btn-danger no-print" style="float:right; padding:1px 6px; font-size:11px; margin-top:-2px;" onclick="removeQA('${date}')">全批下架</button>
+            `;
+            groupDiv.appendChild(titleDiv);
 
-                // 標題列
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'qa-group-title';
-                titleDiv.innerHTML = `
-                    <span>到期日: ${date}</span>
-                    <button class="btn-danger no-print" style="float:right; padding:1px 6px; font-size:11px; margin-top:-2px;" onclick="removeQA('${date}')">全批下架</button>
-                `;
-                groupDiv.appendChild(titleDiv);
+            // 商品兩小欄
+            const itemsRow = document.createElement('div');
+            itemsRow.className = 'qa-items-row';
+            const itemHalf   = Math.ceil(items.length / 2);
+            const leftItems  = items.slice(0, itemHalf);
+            const rightItems = items.slice(itemHalf);
 
-                // 商品內層：兩小欄並排
-                const itemsRow = document.createElement('div');
-                itemsRow.className = 'qa-items-row';
-
-                const itemHalf   = Math.ceil(items.length / 2);
-                const leftItems  = items.slice(0, itemHalf);
-                const rightItems = items.slice(itemHalf);
-
-                [leftItems, rightItems].forEach((colItems, colIdx) => {
-                    const col = document.createElement('div');
-                    col.className = 'qa-items-col';
-                    colItems.forEach((item, idx) => {
-                        const side  = colIdx === 0 ? 'L' : 'R';
-                        const svgId = `qa_${dateIdx}_${side}${idx}`;
-                        const card  = document.createElement('div');
-                        card.className = 'qa-item-card';
-                        card.innerHTML = `
-                            <div class="qa-item-actions no-print">
-                                <button class="btn-warning" style="padding:1px 6px; font-size:11px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
-                            </div>
-                            <div class="qa-item-title">${item.Name}</div>
-                            ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                        `;
-                        col.appendChild(card);
-                    });
-                    itemsRow.appendChild(col);
+            [leftItems, rightItems].forEach((colItems, colIdx) => {
+                const col = document.createElement('div');
+                col.className = 'qa-items-col';
+                colItems.forEach((item, idx) => {
+                    const side  = colIdx === 0 ? 'L' : 'R';
+                    const svgId = `qa_${dateIdx}_${side}${idx}`;
+                    const card  = document.createElement('div');
+                    card.className = 'qa-item-card';
+                    card.innerHTML = `
+                        <div class="qa-item-actions no-print">
+                            <button class="btn-warning" style="padding:1px 6px; font-size:11px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                        </div>
+                        <div class="qa-item-title">${item.Name}</div>
+                        ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                    `;
+                    col.appendChild(card);
                 });
-
-                groupDiv.appendChild(itemsRow);
-                wrapDiv.appendChild(groupDiv);
-                rowDiv.appendChild(wrapDiv);
-                // 條碼暫不在這裡渲染，等 rowDiv 掛上 DOM 後統一處理
+                itemsRow.appendChild(col);
             });
 
-            resDiv.appendChild(rowDiv); // ← 先掛上 DOM
+            groupDiv.appendChild(itemsRow);
+            measureBox.appendChild(groupDiv); // 先放進測量容器
+            groupEls.push({ groupDiv, date, dateIdx, items, leftItems, rightItems });
+        });
 
-            // ── 掛上 DOM 之後才渲染條碼，SVG 元素此時已存在 ──
-            if(showBc) {
-                [0, 1].forEach(offset => {
-                    const dateIdx = i + offset;
-                    if (dateIdx >= sortedDates.length) return;
-                    const items = expMap[sortedDates[dateIdx]];
-                    const itemHalf   = Math.ceil(items.length / 2);
-                    items.slice(0, itemHalf).forEach((item, idx) => {
-                        try { renderBarcode(`qa_${dateIdx}_L${idx}`, item.ID, item.Type); } catch(e) {}
-                    });
-                    items.slice(itemHalf).forEach((item, idx) => {
-                        try { renderBarcode(`qa_${dateIdx}_R${idx}`, item.ID, item.Type); } catch(e) {}
-                    });
+        // ── 步驟2：渲染條碼（在測量容器中）──
+        if(showBc) {
+            groupEls.forEach(({ date, dateIdx, leftItems, rightItems }) => {
+                leftItems.forEach((item, idx) => {
+                    try { renderBarcode(`qa_${dateIdx}_L${idx}`, item.ID, item.Type); } catch(e) {}
                 });
-            }
+                rightItems.forEach((item, idx) => {
+                    try { renderBarcode(`qa_${dateIdx}_R${idx}`, item.ID, item.Type); } catch(e) {}
+                });
+            });
         }
+
+        // ── 步驟3：量測每個群組高度，依頁高動態分左右欄 ──
+        // A4 可用高 ≈ 257mm，換算 px（螢幕96dpi：1mm≈3.7795px）
+        const pageH = 257 * 3.7795;
+        let leftH = 0;
+        let splitIdx = groupEls.length; // 預設全部放左欄
+
+        for (let i = 0; i < groupEls.length; i++) {
+            const h = groupEls[i].groupDiv.offsetHeight + 6; // +6 為 gap
+            if (leftH + h > pageH) {
+                splitIdx = i; // 從這個群組開始放右欄
+                break;
+            }
+            leftH += h;
+        }
+
+        // ── 步驟4：從測量容器取出，放進正式左右欄 ──
+        document.body.removeChild(measureBox);
+
+        const leftCol  = document.createElement('div');
+        leftCol.className  = 'qa-col';
+        const rightCol = document.createElement('div');
+        rightCol.className = 'qa-col';
+        resDiv.appendChild(leftCol);
+        resDiv.appendChild(rightCol);
+
+        groupEls.forEach(({ groupDiv }, i) => {
+            if (i < splitIdx) {
+                leftCol.appendChild(groupDiv);
+            } else {
+                rightCol.appendChild(groupDiv);
+            }
+        });
 
         // 清除舊的 print 監聽
         if(window._qaPrintHandler) {
