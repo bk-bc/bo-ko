@@ -83,26 +83,33 @@
         .qa-print-container { display: none; }
         .qa-screen-container { display: block; }
 
-        /* 主容器：垂直堆疊每頁，寬度鎖定A4可用寬（730px），螢幕上置中 */
+        /* 外層包裝：控制縮放後的實際佔位高度 */
+        #qaResultWrapper {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* 主容器：固定730px寬，由JS動態scale縮放適應螢幕 */
         #qaResult {
             display: flex;
             flex-direction: column;
             gap: 0;
-            width: 730px;        /* A4可用寬，與列印基準一致 */
-            max-width: 100%;     /* 手機螢幕不夠寬時自動縮 */
-            margin: 0 auto;
+            width: 730px;
+            transform-origin: top left;
+            /* transform: scale(X) 由 JS 動態寫入 */
         }
 
-        /* 每頁：左右兩欄並排，寬度固定 */
+        /* 每頁：左右兩欄並排 */
         .qa-page-row {
             display: flex;
             flex-direction: row;
             align-items: flex-start;
             gap: 6px;
-            width: 100%;
+            width: 730px;
+            margin-bottom: 16px;
         }
 
-        /* 每欄固定362px（A4兩欄基準） */
+        /* 每欄固定362px */
         .qa-col {
             flex: 0 0 362px;
             width: 362px;
@@ -331,10 +338,15 @@
                ══════════════════════════════════════════ */
             .qa-screen-container, .qa-print-container { display: none !important; }
 
+            #qaResultWrapper {
+                width: 100% !important;
+                height: auto !important;
+            }
             #qaResult {
                 display: flex !important;
                 flex-direction: column !important;
                 width: 100% !important;
+                transform: none !important;
                 margin: 0 !important;
             }
             .qa-page-row {
@@ -344,6 +356,7 @@
                 gap: 5px !important;
                 width: 100% !important;
                 page-break-after: always !important;
+                margin-bottom: 0 !important;
             }
             .qa-page-row:last-child {
                 page-break-after: auto !important;
@@ -449,7 +462,9 @@
             <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
             <button class="btn-primary" onclick="window.print()">列印</button>
         </div>
-        <div id="qaResult" class="print-container"></div>
+        <div id="qaResultWrapper">
+            <div id="qaResult" class="print-container"></div>
+        </div>
     </div>
 
     <div id="classify" class="section">
@@ -1078,30 +1093,32 @@
             return { groupDiv, date, dateIdx, leftItems, rightItems };
         }
 
-        // ── 步驟1：用A4列印寬度建立測量盒（固定基準，不受螢幕影響）──
-        // A4 = 210mm，@96dpi = 794px，扣掉兩側邊距約16mm = 730px可用
-        // 兩欄各半扣gap：(730 - 5) / 2 ≈ 362px
+        // ── 步驟1：建立測量盒，寬度固定為A4單欄寬 ──
+        // A4可用寬730px，兩欄各362px（含gap）
         const PRINT_COL_WIDTH = 362;
-
         const measureBox = document.createElement('div');
-        measureBox.style.cssText = `position:fixed; visibility:hidden; pointer-events:none; width:${PRINT_COL_WIDTH}px; left:-9999px; top:0; z-index:-1;`;
+        measureBox.style.cssText = `position:fixed; visibility:hidden; pointer-events:none; width:${PRINT_COL_WIDTH}px; left:-9999px; top:0; z-index:-1; overflow:hidden;`;
         document.body.appendChild(measureBox);
 
-        // ── 步驟2：建立所有群組並量測高度 ──
+        // ── 步驟2：把每個群組放進測量盒量真實高度（不用clone）──
         const groupEls = sortedDates.map((date, dateIdx) => makeGroupEl(date, dateIdx));
 
-        // 量測每個群組高度
         const heights = groupEls.map(({ groupDiv }) => {
             measureBox.innerHTML = '';
-            measureBox.appendChild(groupDiv.cloneNode(true));
-            return measureBox.firstChild.offsetHeight + 6; // +6 gap
+            measureBox.appendChild(groupDiv);          // 放入原始節點
+            const h = groupDiv.offsetHeight + 6;       // +6 gap
+            return h;
         });
 
+        // 量完後清空測量盒，節點稍後再放進正式容器
+        measureBox.innerHTML = '';
         document.body.removeChild(measureBox);
 
-        // ── 步驟3：多頁分欄，每頁左右各一欄 ──
-        // A4可用高 = 297mm - 上下邊距約20mm = 277mm @96dpi ≈ 1048px
-        const pageH = Math.floor(277 * 96 / 25.4);
+        // ── 步驟3：以A4實際列印高度為基準分頁 ──
+        // A4高297mm，上下各留10mm邊距 = 277mm
+        // 列印時瀏覽器實際渲染DPI通常是96，但iOS Safari列印用的是CSS px
+        // 1mm = 3.7795px（CSS標準），277mm = 1047px
+        const pageH = Math.floor(277 * 3.7795);
 
         // 貪心分配：左欄先填，滿了換右欄，右欄滿了換下一頁左欄
         const pages = []; // 每頁 = { left: [idx,...], right: [idx,...] }
@@ -1169,12 +1186,27 @@
             });
         }
 
-        if(window._qaPrintHandler) {
-            window.removeEventListener('beforeprint', window._qaPrintHandler);
-            window.removeEventListener('afterprint',  window._qaAfterHandler);
-            window._qaPrintHandler = null;
-            window._qaAfterHandler = null;
+        // ── 步驟6：計算scale，讓730px內容縮放適應螢幕寬度 ──
+        function applyScale() {
+            const wrapper = document.getElementById('qaResultWrapper');
+            const wrapperW = wrapper.offsetWidth || window.innerWidth - 20;
+            const scale = Math.min(1, wrapperW / 730);
+            resDiv.style.transform = `scale(${scale})`;
+            // 縮放後調整外層高度，避免留白
+            wrapper.style.height = (resDiv.scrollHeight * scale) + 'px';
         }
+        applyScale();
+        window.addEventListener('resize', applyScale);
+
+        // 列印時移除scale，讓內容以原始大小輸出
+        const printHandler = () => { resDiv.style.transform = 'none'; };
+        const afterHandler = () => { applyScale(); };
+        window.removeEventListener('beforeprint', window._qaPrintHandler);
+        window.removeEventListener('afterprint',  window._qaAfterHandler);
+        window._qaPrintHandler = printHandler;
+        window._qaAfterHandler = afterHandler;
+        window.addEventListener('beforeprint', printHandler);
+        window.addEventListener('afterprint',  afterHandler);
     }
 
     function removeQA(date, itemId = null) {
