@@ -180,7 +180,38 @@
         .qa-item-actions {
             display: flex;
             justify-content: flex-end;
+            align-items: center;
             margin-bottom: 3px;
+            gap: 3px;
+        }
+        /* 數量 -/+ 按鈕 */
+        .qa-qty-btn {
+            background: #5bc4b0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .qa-qty-num {
+            font-size: 15px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+        }
+        /* 列印時名稱後的 *數量 標記 */
+        .qa-qty-badge {
+            display: inline-block;
+            background: #e0e0e0;
+            color: #333;
+            font-size: 0.85em;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: 4px;
+            font-weight: normal;
         }
 
         /* 品保三色 */
@@ -365,6 +396,15 @@
                 font-size: 14px !important;
             }
             .qa-item-actions { display: none !important; }
+            .qa-qty-badge {
+                display: inline-block !important;
+                background: #e0e0e0 !important;
+                color: #333 !important;
+                font-size: 0.85em !important;
+                padding: 1px 5px !important;
+                border-radius: 3px !important;
+                margin-left: 4px !important;
+            }
             .qa-item-card .barcode {
                 width: 95% !important;
                 height: 28px !important;
@@ -512,8 +552,9 @@
         if (!str) return '';
         let arr = str.split('/').map(s => s.trim()).filter(Boolean);
         if (isDate) {
-            arr = arr.filter(d => /^20\d{6}$/.test(d));
-            arr.sort();
+            // 允許純日期 20260501 或帶數量 20260501_3
+            arr = arr.filter(d => /^20\d{6}(_\d+)?$/.test(d));
+            arr.sort((a, b) => a.substring(0, 8).localeCompare(b.substring(0, 8)));
         } else {
             const today = new Date();
             const expirationDays = 30;
@@ -559,8 +600,22 @@
 
     function renderBarcode(targetId, value, format) {
         try {
+            let fmt;
+            if (format === 'EAN13') {
+                fmt = 'EAN13';
+            } else if (format === 'EAN8') {
+                fmt = 'EAN8';
+            } else if (format === 'UPCA') {
+                fmt = 'UPC';        // JsBarcode 的 UPC-A 格式名稱是 'UPC'
+            } else if (format === 'UPCE') {
+                fmt = 'UPCE';       // JsBarcode 支援 UPCE
+            } else if (format === 'I35' || format === 'I24') {
+                fmt = 'EAN8';
+            } else {
+                fmt = 'CODE128';
+            }
             JsBarcode(`#${targetId}`, value, {
-                format: format.includes('EAN') || format.includes('UPC') ? format : 'CODE128',
+                format: fmt,
                 displayValue: true, height: 35, margin: 0, width: 1.5
             });
         } catch (e) {
@@ -1038,8 +1093,13 @@
             if(item.Expiry) {
                 item.Expiry.split('/').forEach(d => {
                     if(d) {
-                        if(!expMap[d]) expMap[d] = [];
-                        expMap[d].push(item);
+                        // 只取前8碼純日期作為key，忽略_數量後綴
+                        const pureDate = d.substring(0, 8);
+                        if(!expMap[pureDate]) expMap[pureDate] = [];
+                        // 避免同一商品重複加入
+                        if (!expMap[pureDate].find(i => i.ID === item.ID)) {
+                            expMap[pureDate].push(item);
+                        }
                     }
                 });
             }
@@ -1079,13 +1139,23 @@
                 colItems.forEach((item, idx) => {
                     const side  = colIdx === 0 ? 'L' : 'R';
                     const svgId = `qa_${dateIdx}_${side}${idx}`;
+
+                    // 找出此商品在此日期的數量
+                    const expiryEntry = item.Expiry.split('/').find(e => e === date || e.startsWith(date + '_'));
+                    const parsed = expiryEntry ? parseExpiry(expiryEntry) : null;
+                    const qty = parsed ? parsed.qty : 0;
+                    const qtyDisplay = qty > 0 ? `<span class="qa-qty-badge">*${qty}</span>` : '';
+
                     const card  = document.createElement('div');
                     card.className = 'qa-item-card';
                     card.innerHTML = `
                         <div class="qa-item-actions no-print">
-                            <button class="btn-warning" style="padding:1px 6px; font-size:11px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                            <button class="qa-qty-btn qa-qty-minus" onclick="updateExpiryQty('${item.ID}', '${date}', -1)">－</button>
+                            <span class="qa-qty-num">${qty}</span>
+                            <button class="qa-qty-btn qa-qty-plus" onclick="updateExpiryQty('${item.ID}', '${date}', 1)">＋</button>
+                            <button class="btn-warning" style="padding:1px 6px; font-size:11px; margin-left:4px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
                         </div>
-                        <div class="qa-item-title">${item.Name}</div>
+                        <div class="qa-item-title">${item.Name}${qtyDisplay}</div>
                         ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
                     `;
                     col.appendChild(card);
@@ -1216,12 +1286,41 @@
         window.addEventListener('afterprint',  afterHandler);
     }
 
+    // ── Expiry 數量工具 ──
+    // 從 "20260501_3" 解析出日期和數量
+    function parseExpiry(entry) {
+        const m = entry.match(/^(20\d{6})(?:_(\d+))?$/);
+        if (!m) return null;
+        return { date: m[1], qty: m[2] ? parseInt(m[2]) : 0 };
+    }
+    // 組合回字串：qty=0 → "20260501"，qty>0 → "20260501_3"
+    function formatExpiry(date, qty) {
+        return qty > 0 ? `${date}_${qty}` : date;
+    }
+    // 更新某筆商品某個日期的數量
+    function updateExpiryQty(itemId, date, delta) {
+        db.forEach(item => {
+            if (item.ID !== itemId) return;
+            let arr = item.Expiry ? item.Expiry.split('/').filter(Boolean) : [];
+            const idx = arr.findIndex(e => e === date || e.startsWith(date + '_'));
+            if (idx === -1) return;
+            const parsed = parseExpiry(arr[idx]);
+            if (!parsed) return;
+            const newQty = Math.max(0, parsed.qty + delta);
+            arr[idx] = formatExpiry(date, newQty);
+            item.Expiry = arr.join('/');
+        });
+        saveData();
+        renderQA();
+    }
+
     function removeQA(date, itemId = null) {
         db.forEach(item => {
             if (!itemId || item.ID === itemId) {
-                if (item.Expiry.includes(date)) {
-                    item.Expiry = item.Expiry.split('/').filter(d => d !== date).join('/');
-                }
+                item.Expiry = item.Expiry.split('/').filter(d => {
+                    // 過濾掉純日期或帶數量的同一天
+                    return d !== date && !d.startsWith(date + '_');
+                }).join('/');
             }
         });
         saveData(); renderQA();
