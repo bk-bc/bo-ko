@@ -145,19 +145,36 @@
             overflow: hidden;
         }
 
-        /* 群組內商品：兩小欄並排 */
+        /* 群組內商品：單欄堆疊 */
         .qa-items-row {
             display: flex;
-            flex-direction: row;
-            align-items: flex-start;
+            flex-direction: column;
             gap: 4px;
         }
-        .qa-items-col {
+        .qa-items-col { display: none; } /* 舊的兩欄，不再使用 */
+
+        /* 商品卡片內部：左右並排 */
+        .qa-item-inner {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+        .qa-item-left {
             flex: 1 1 0;
             min-width: 0;
+        }
+        .qa-item-right {
+            flex: 0 0 45%;
+            max-width: 45%;
             display: flex;
-            flex-direction: column;
-            gap: 3px;
+            align-items: center;
+            justify-content: center;
+        }
+        .qa-item-right .barcode {
+            width: 100%;
+            height: auto;
+            max-height: 55px;
         }
 
         /* 商品卡片 */
@@ -391,6 +408,25 @@
                 box-shadow: none !important;
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
+            }
+            .qa-item-inner {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 5px !important;
+            }
+            .qa-item-left {
+                flex: 1 1 0 !important;
+                min-width: 0 !important;
+            }
+            .qa-item-right {
+                flex: 0 0 45% !important;
+                max-width: 45% !important;
+            }
+            .qa-item-right .barcode {
+                width: 100% !important;
+                height: 35px !important;
+                display: block !important;
             }
             .qa-item-title {
                 font-size: 14px !important;
@@ -1129,42 +1165,38 @@
 
             const itemsRow = document.createElement('div');
             itemsRow.className = 'qa-items-row';
-            const itemHalf   = Math.ceil(items.length / 2);
-            const leftItems  = items.slice(0, itemHalf);
-            const rightItems = items.slice(itemHalf);
 
-            [leftItems, rightItems].forEach((colItems, colIdx) => {
-                const col = document.createElement('div');
-                col.className = 'qa-items-col';
-                colItems.forEach((item, idx) => {
-                    const side  = colIdx === 0 ? 'L' : 'R';
-                    const svgId = `qa_${dateIdx}_${side}${idx}`;
+            // 改為單欄，每張卡片內左右並排
+            items.forEach((item, idx) => {
+                const svgId = `qa_${dateIdx}_${idx}`;
 
-                    // 找出此商品在此日期的數量
-                    const expiryEntry = item.Expiry.split('/').find(e => e === date || e.startsWith(date + '_'));
-                    const parsed = expiryEntry ? parseExpiry(expiryEntry) : null;
-                    const qty = parsed ? parsed.qty : 0;
-                    const qtyDisplay = qty > 0 ? `<span class="qa-qty-badge">*${qty}</span>` : '';
+                const expiryEntry = item.Expiry.split('/').find(e => e === date || e.startsWith(date + '_'));
+                const parsed = expiryEntry ? parseExpiry(expiryEntry) : null;
+                const qty = parsed ? parsed.qty : 0;
+                const qtyDisplay = qty > 0 ? `<span class="qa-qty-badge">*${qty}</span>` : '';
 
-                    const card  = document.createElement('div');
-                    card.className = 'qa-item-card';
-                    card.innerHTML = `
-                        <div class="qa-item-actions no-print">
-                            <button class="qa-qty-btn qa-qty-minus" onclick="updateExpiryQty('${item.ID}', '${date}', -1)">－</button>
-                            <span class="qa-qty-num">${qty}</span>
-                            <button class="qa-qty-btn qa-qty-plus" onclick="updateExpiryQty('${item.ID}', '${date}', 1)">＋</button>
-                            <button class="btn-warning" style="padding:1px 6px; font-size:11px; margin-left:4px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                const card = document.createElement('div');
+                card.className = 'qa-item-card';
+                card.innerHTML = `
+                    <div class="qa-item-inner">
+                        <div class="qa-item-left">
+                            <div class="qa-item-actions no-print">
+                                <button class="qa-qty-btn" onclick="updateExpiryQty('${item.ID}', '${date}', -1)">－</button>
+                                <span class="qa-qty-num">${qty}</span>
+                                <button class="qa-qty-btn" onclick="updateExpiryQty('${item.ID}', '${date}', 1)">＋</button>
+                                <button class="btn-warning" style="padding:1px 6px; font-size:11px; margin-left:4px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                            </div>
+                            <div class="qa-item-title">${item.Name}${qtyDisplay}</div>
                         </div>
-                        <div class="qa-item-title">${item.Name}${qtyDisplay}</div>
-                        ${showBc ? `<div><svg id="${svgId}" class="barcode"></svg></div>` : ''}
-                    `;
-                    col.appendChild(card);
-                });
-                itemsRow.appendChild(col);
+                        ${showBc ? `<div class="qa-item-right"><svg id="${svgId}" class="barcode"></svg></div>` : ''}
+                    </div>
+                `;
+                itemsRow.appendChild(card);
             });
 
             groupDiv.appendChild(itemsRow);
-            return { groupDiv, date, dateIdx, leftItems, rightItems };
+            // 渲染條碼（DOM掛上後）
+            return { groupDiv, date, dateIdx, items };
         }
 
         // ── 步驟1：建立測量盒，寬度固定為A4單欄寬 ──
@@ -1253,12 +1285,9 @@
 
         // ── 步驟5：渲染條碼（DOM 已掛上）──
         if(showBc) {
-            groupEls.forEach(({ date, dateIdx, leftItems, rightItems }) => {
-                leftItems.forEach((item, idx) => {
-                    try { renderBarcode(`qa_${dateIdx}_L${idx}`, item.ID, item.Type); } catch(e) {}
-                });
-                rightItems.forEach((item, idx) => {
-                    try { renderBarcode(`qa_${dateIdx}_R${idx}`, item.ID, item.Type); } catch(e) {}
+            groupEls.forEach(({ dateIdx, items }) => {
+                items.forEach((item, idx) => {
+                    try { renderBarcode(`qa_${dateIdx}_${idx}`, item.ID, item.Type); } catch(e) {}
                 });
             });
         }
