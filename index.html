@@ -58,6 +58,13 @@
         }
         .card-sub { font-size: 0.85em; color: #555; margin-bottom: 5px; word-break: break-all; }
         .card-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+        .card-down { background-color: #ffe6ee; }
+        .down-label {
+            color: #c2185b;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
         .no-print button, .btn-danger, .btn-warning {
             flex-shrink: 0 !important;
             white-space: nowrap !important;
@@ -229,6 +236,71 @@
             border-radius: 4px;
             margin-left: 4px;
             font-weight: normal;
+        }
+
+        .qa-add-panel {
+            display: none;
+            margin-bottom: 12px;
+        }
+        .qa-add-result {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .qa-add-result button {
+            width: 100%;
+            text-align: left;
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .qa-add-result .qa-result-id {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .qa-add-selected {
+            display: none;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .qa-date-group {
+            margin-bottom: 10px;
+        }
+        .qa-date-group-title {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .qa-date-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .qa-date-buttons button {
+            flex: 0 0 auto;
+            min-width: 48px;
+            background: #f8f9fa;
+            color: #222;
+            border: 1px solid #ddd;
+        }
+        .qa-date-buttons button.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .qa-add-status {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 8px;
+            min-height: 20px;
         }
 
         /* 品保三色 */
@@ -460,8 +532,8 @@
         <button class="btn-success" onclick="exportCSV()">匯出 CSV</button>
     </div>
     <div class="nav-buttons" style="margin-top: 10px;">
-        <button onclick="switchTab('add')" id="btn-add" class="active">新增</button>
-        <button onclick="switchTab('search')" id="btn-search">搜尋</button>
+        <button onclick="switchTab('search')" id="btn-search" class="active">搜尋</button>
+        <button onclick="switchTab('add')" id="btn-add">新增</button>
         <button onclick="switchTab('error')" id="btn-error">勘誤</button>
         <button onclick="switchTab('qa')" id="btn-qa">品保</button>
         <button onclick="switchTab('classify')" id="btn-classify">分類</button>
@@ -470,7 +542,7 @@
 </header>
 
 <div class="container">
-    <div id="add" class="section active">
+    <div id="add" class="section">
         <h3>新增資料</h3>
         <select id="addType">
             <option value="EAN8">EAN8</option><option value="EAN13">EAN13</option>
@@ -481,7 +553,7 @@
         <button class="btn-primary" onclick="addItems()" style="width: 100%;">新增</button>
     </div>
 
-    <div id="search" class="section">
+    <div id="search" class="section active">
         <div class="flex-row no-print">
             <label><input type="checkbox" id="freshFoodCheck" onchange="renderSearch()"> 鮮食</label>
             <label><input type="checkbox" id="shortcutToggle" checked onchange="renderSearch()"> 快捷鍵</label>
@@ -508,9 +580,34 @@
     </div>
 
     <div id="qa" class="section">
-        <div class="flex-row no-print">
+        <div class="nav-buttons no-print" style="margin-bottom: 10px;">
+            <button onclick="switchQAMode('add')" id="qaModeAdd">新增</button>
+            <button onclick="switchQAMode('list')" id="qaModeList" class="active">清單</button>
+        </div>
+        <div class="flex-row no-print" id="qaListToolbar">
             <label><input type="checkbox" id="qaBarcodeToggle" checked onchange="renderQA()"> 顯示條碼</label>
             <button class="btn-primary" onclick="window.print()">列印</button>
+        </div>
+        <div id="qaAddPanel" class="qa-add-panel no-print">
+            <input type="text" id="qaAddSearchInput" placeholder="輸入至少三個字搜尋 ID/Name" oninput="renderQAAddSearch()">
+            <div id="qaAddSearchResult" class="qa-add-result"></div>
+            <div id="qaAddSelected" class="qa-add-selected"></div>
+            <div id="qaAddDatePanel" style="display:none;">
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">年份</div>
+                    <div id="qaYearButtons" class="qa-date-buttons"></div>
+                </div>
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">月份</div>
+                    <div id="qaMonthButtons" class="qa-date-buttons"></div>
+                </div>
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">日期</div>
+                    <div id="qaDayButtons" class="qa-date-buttons"></div>
+                </div>
+                <button class="btn-primary" onclick="createQAExpiry()" style="width:100%;">建檔</button>
+                <div id="qaAddStatus" class="qa-add-status"></div>
+            </div>
         </div>
         <div id="qaResultWrapper">
             <div id="qaResult" class="print-container"></div>
@@ -543,6 +640,8 @@
     // --- 核心資料狀態 ---
     let db = []; 
     let stats = { imported: 0, merged: 0 };
+    let qaAddSelectedIndex = null;
+    let qaAddDate = { year: null, month: null, day: null };
 
     // --- 初始化 ---
     window.onload = () => {
@@ -553,6 +652,7 @@
                 if (item.Locked === undefined || item.Locked === 'undefined' || item.Locked === null || item.Locked === '') {
                     item.Locked = 'False';
                 }
+                item.Down = normalizeBool(item.Down ?? item.down);
                 if (!item.C1) item.C1 = '未分類';
                 item.Expiry = cleanArrayStr(item.Expiry, true);
                 item.Event = cleanArrayStr(item.Event, false, item.Name, item.ID);
@@ -561,8 +661,10 @@
             rawData.forEach(item => { upsertItem(item); });
             saveData();
         }
-        updateStatsUI();
         renderAddType();
+        updateStatsUI();
+        populateSearchDropdowns();
+        renderSearch();
     };
 
     function saveData() {
@@ -578,7 +680,7 @@
         
         if(tabId === 'search') { document.getElementById('searchKeyword1').value=''; document.getElementById('searchKeyword2').value=''; populateSearchDropdowns(); renderSearch(); }
         if(tabId === 'error') renderError();
-        if(tabId === 'qa') renderQA();
+        if(tabId === 'qa') switchQAMode('list');
         if(tabId === 'classify') renderClassify();
         if(tabId === 'activity') renderActivity();
     }
@@ -622,8 +724,38 @@
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
+    function normalizeBool(value) {
+        return String(value).toLowerCase() === 'true' ? 'True' : 'False';
+    }
+
     function updateStatsUI() {
         document.getElementById('headerStats').innerText = `資料統計：總導入 ${stats.imported} | 合併數 ${stats.merged} | 總筆數 ${db.length}`;
+        const unclassifiedCount = db.filter(i => i.C1 === '未分類').length;
+        const conflictCount = getConflictStats().conflicts.length;
+        document.getElementById('btn-classify').innerText = unclassifiedCount > 0 ? `分類(${unclassifiedCount})` : '分類';
+        document.getElementById('btn-error').innerText = conflictCount > 0 ? `勘誤(${conflictCount})` : '勘誤';
+    }
+
+    function getConflictStats() {
+        const idGroups = {};
+        db.forEach(item => {
+            if(!idGroups[item.ID]) idGroups[item.ID] = [];
+            idGroups[item.ID].push(item);
+        });
+        const conflicts = [];
+        let totalDupItems = 0; let totalDupBatches = 0;
+        for (const [id, group] of Object.entries(idGroups)) {
+            if (group.length > 1) {
+                totalDupItems += group.length; totalDupBatches++;
+                const types = [...new Set(group.map(i=>i.Type))];
+                const names = [...new Set(group.map(i=>i.Name))];
+                const c1s = [...new Set(group.map(i=>i.C1))];
+                if(types.length > 1 || names.length > 1 || c1s.length > 1 || group.some(i=>i.Locked!=='True')) {
+                    conflicts.push({id, group, types, names, c1s});
+                }
+            }
+        }
+        return { conflicts, totalDupItems, totalDupBatches };
     }
 
     function getJulian(addDays = 0) {
@@ -660,6 +792,7 @@
     }
 
     function upsertItem(newItem) {
+        newItem.Down = normalizeBool(newItem.Down ?? newItem.down);
         const namePrefix = newItem.Name.substring(0, 6);
         const isSixDigits = /^\d{6}$/.test(namePrefix);
         if (!isSixDigits) {
@@ -673,6 +806,7 @@
             db.push(newItem);
             return { imported: 1, merged: 0 };
         }
+        const finalDown = [newItem, ...existing].some(i => normalizeBool(i.Down ?? i.down) === 'True') ? 'True' : 'False';
         let allExp = newItem.Expiry || "";
         let allEv = newItem.Event || "";
         existing.forEach(e => {
@@ -682,9 +816,11 @@
         let finalPooledExpiry = cleanArrayStr(allExp, true);
         newItem.Expiry = finalPooledExpiry;
         newItem.Event = cleanArrayStr(allEv, false, newItem.Name, newItem.ID);
+        newItem.Down = finalDown;
         existing.forEach(e => {
             e.Expiry = finalPooledExpiry;
             e.Event = cleanArrayStr(allEv, false, e.Name, e.ID);
+            e.Down = finalDown;
         });
         let perfectMatch = existing.find(e => e.Name === newItem.Name && e.Type === newItem.Type && e.C1 === newItem.C1);
         if (perfectMatch) {
@@ -723,11 +859,12 @@
                 if (!lines[i].trim()) continue;
                 const parts = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
                 if (parts.length < 7) continue;
-                let [Type, ID, Name, C1, Expiry, Event, Locked] = parts;
+                let [Type, ID, Name, C1, Expiry, Event, Locked, Down] = parts;
                 Type = Type.toUpperCase();
                 Locked = (Locked === 'True') ? 'True' : 'False';
+                Down = normalizeBool(Down);
                 processedCount++;
-                let newItem = {Type, ID, Name, C1, Expiry, Event, Locked};
+                let newItem = {Type, ID, Name, C1, Expiry, Event, Locked, Down};
                 let res = upsertItem(newItem);
                 newAddCount += res.imported;
                 newMergeCount += res.merged;
@@ -743,9 +880,10 @@
     }
 
     function exportCSV() {
-        let csv = "Type,ID,Name,C1,Expiry,Event,Locked\n";
+        let csv = "Type,ID,Name,C1,Expiry,Event,Locked,down\n";
         db.forEach(row => {
-            csv += `"${row.Type}","${row.ID}","${row.Name}","${row.C1}","${row.Expiry}","${row.Event}","${row.Locked}"\n`;
+            const downValue = normalizeBool(row.Down ?? row.down) === 'True' ? 'true' : 'false';
+            csv += `"${row.Type}","${row.ID}","${row.Name}","${row.C1}","${row.Expiry}","${row.Event}","${row.Locked}","${downValue}"\n`;
         });
         const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
@@ -765,7 +903,7 @@
             const [ID, Name] = line.split('/');
             if (ID && Name) {
                 processed++;
-                let newItem = { Type: type, ID: ID.trim(), Name: Name.trim(), C1: '未分類', Expiry: '', Event: '', Locked: 'False' };
+                let newItem = { Type: type, ID: ID.trim(), Name: Name.trim(), C1: '未分類', Expiry: '', Event: '', Locked: 'False', Down: 'False' };
                 let res = upsertItem(newItem);
                 added += res.imported;
                 merged += res.merged;
@@ -885,12 +1023,16 @@
 
             chunk.forEach((item, chunkIdx) => {
                 const globalIdx = (i * 12) + chunkIdx;
+                const dbIdx = db.indexOf(item);
+                const isDown = normalizeBool(item.Down ?? item.down) === 'True';
+                const downLabel = isDown ? '<div class="down-label">已下架</div>' : '';
                 const card = document.createElement('div');
-                card.className = 'card';
+                card.className = isDown ? 'card card-down' : 'card';
                 
                 if (isFresh) {
                     if (item.Type === 'I35') {
                         card.innerHTML = `
+                            ${downLabel}
                             <div class="card-title">${item.Name} (${item.Type})</div>
                             <div class="card-actions no-print">
                                 <button class="btn-warning"  onclick="showI35Barcode('${item.ID}', 0, 3, 'bc_${globalIdx}')">3</button>
@@ -903,6 +1045,7 @@
                     } else {
                         // I24：直接顯示今日+明日兩條 EAN13 條碼，不顯示按鈕
                         card.innerHTML = `
+                            ${downLabel}
                             <div class="card-title">${item.Name} (${item.Type})</div>
                             <div class="barcode-wrapper"><svg id="bc_${globalIdx}_0" class="barcode"></svg></div>
                             <div class="barcode-wrapper"><svg id="bc_${globalIdx}_1" class="barcode"></svg></div>
@@ -911,15 +1054,16 @@
                 } else {
                     const hideNormalShortcuts = !isFresh && !showShortcuts;
                     card.innerHTML = `
+                        ${downLabel}
                         <div class="card-title">${item.Name}</div>
                         <div class="card-sub">${item.C1} | ${item.Event}</div>
                         <div class="barcode-wrapper"><svg id="bc_${globalIdx}" class="barcode"></svg></div>
                         <div class="card-actions no-print" style="display: ${hideNormalShortcuts ? 'none' : 'flex'};">
                             <button class="btn-yellow" onclick="actionCard('${item.ID}', 'reclassify')">✋分類</button>
-                            <button class="btn-pink" onclick="actionCard('${item.ID}', 'qa')">📅品保</button>
                             <button class="btn-primary" onclick="actionCard('${item.ID}', 'order')">🛒訂貨</button>
                             <button class="btn-danger" onclick="actionCard('${item.ID}', 'delete')">🗑️刪除</button>
                             <button class="btn-lightblue" onclick="actionCard('${item.ID}', 'lock')">${item.Locked === 'True' ? '🔓解鎖' : '🔒鎖定'}</button>
+                            <button class="btn-warning" onclick="toggleDown(${dbIdx})">${isDown ? '上架' : '下架'}</button>
                         </div>
                     `;
                 }
@@ -1002,72 +1146,20 @@
                 item.C1 = newC1.trim() || item.C1;
                 saveData(); renderSearch();
             }
-        } else if (action === 'qa') {
-            // iOS 無法對隱藏元素觸發 .click()
-            // 改為動態建立可見的日期選擇器覆蓋在畫面上
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; display:flex; align-items:center; justify-content:center;';
-
-            const box = document.createElement('div');
-            box.style.cssText = 'background:#fff; border-radius:12px; padding:20px; width:280px; text-align:center; font-size:16px;';
-
-            const today = new Date().toISOString().slice(0, 10);
-            box.innerHTML = `
-                <div style="font-weight:bold; margin-bottom:12px;">📅 新增到期日</div>
-                <div style="margin-bottom:6px; font-size:13px; color:#555;">${item.Name}</div>
-                <input type="date" id="qaDateInput" value="${today}" style="width:100%; padding:8px; font-size:16px; border:1px solid #ccc; border-radius:6px; margin-bottom:16px;">
-                <div style="display:flex; gap:8px;">
-                    <button id="qaDateCancel" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; background:#f5f5f5; font-size:15px;">取消</button>
-                    <button id="qaDateConfirm" style="flex:1; padding:10px; border:none; border-radius:8px; background:#007bff; color:white; font-size:15px;">確定</button>
-                </div>
-            `;
-
-            overlay.appendChild(box);
-            document.body.appendChild(overlay);
-
-            // 自動 focus 觸發 iOS 日期選擇器
-            setTimeout(() => {
-                const inp = document.getElementById('qaDateInput');
-                if (inp) inp.focus();
-            }, 100);
-
-            document.getElementById('qaDateCancel').onclick = () => {
-                document.body.removeChild(overlay);
-            };
-            document.getElementById('qaDateConfirm').onclick = () => {
-                const val = document.getElementById('qaDateInput').value;
-                if (val) {
-                    const dateStr = val.replace(/-/g, '');
-                    let expArr = item.Expiry ? item.Expiry.split('/').filter(Boolean) : [];
-                    if (!expArr.includes(dateStr)) expArr.push(dateStr);
-                    item.Expiry = cleanArrayStr(expArr.join('/'), true);
-                    saveData(); renderSearch();
-                }
-                document.body.removeChild(overlay);
-            };
         }
+    }
+
+    function toggleDown(dbIdx) {
+        const item = db[dbIdx];
+        if (!item) return;
+        item.Down = normalizeBool(item.Down ?? item.down) === 'True' ? 'False' : 'True';
+        saveData();
+        renderSearch();
     }
 
     // --- 3. 勘誤頁面 ---
     function renderError() {
-        const idGroups = {};
-        db.forEach(item => {
-            if(!idGroups[item.ID]) idGroups[item.ID] = [];
-            idGroups[item.ID].push(item);
-        });
-        const conflicts = [];
-        let totalDupItems = 0; let totalDupBatches = 0;
-        for (const [id, group] of Object.entries(idGroups)) {
-            if (group.length > 1) {
-                totalDupItems += group.length; totalDupBatches++;
-                const types = [...new Set(group.map(i=>i.Type))];
-                const names = [...new Set(group.map(i=>i.Name))];
-                const c1s = [...new Set(group.map(i=>i.C1))];
-                if(types.length > 1 || names.length > 1 || c1s.length > 1 || group.some(i=>i.Locked!=='True')) {
-                    conflicts.push({id, group, types, names, c1s});
-                }
-            }
-        }
+        const { conflicts, totalDupItems, totalDupBatches } = getConflictStats();
         document.getElementById('errorStats').innerText = `總重複筆數: ${totalDupItems} | 總批數: ${totalDupBatches}`;
         const res = document.getElementById('errorResult');
         res.innerHTML = '';
@@ -1114,6 +1206,141 @@
     }
 
     // --- 4. 品保頁面 ---
+    function switchQAMode(mode) {
+        const isAdd = mode === 'add';
+        document.getElementById('qaAddPanel').style.display = isAdd ? 'block' : 'none';
+        document.getElementById('qaListToolbar').style.display = isAdd ? 'none' : 'flex';
+        document.getElementById('qaResultWrapper').style.display = isAdd ? 'none' : 'block';
+        document.getElementById('qaModeAdd').classList.toggle('active', isAdd);
+        document.getElementById('qaModeList').classList.toggle('active', !isAdd);
+
+        if (isAdd) {
+            initQAAddDate();
+            renderQAAddSelected();
+            renderQAAddDateButtons();
+            renderQAAddSearch();
+            document.getElementById('qaAddSearchInput').focus();
+        } else {
+            renderQA();
+        }
+    }
+
+    function initQAAddDate() {
+        const now = new Date();
+        if (!qaAddDate.year) qaAddDate.year = now.getFullYear();
+        if (!qaAddDate.month) qaAddDate.month = now.getMonth() + 1;
+        if (!qaAddDate.day) qaAddDate.day = now.getDate();
+        const maxDay = getDaysInMonth(qaAddDate.year, qaAddDate.month);
+        if (qaAddDate.day > maxDay) qaAddDate.day = maxDay;
+    }
+
+    function getDaysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    function pad2(num) {
+        return String(num).padStart(2, '0');
+    }
+
+    function renderQAAddSearch() {
+        const input = document.getElementById('qaAddSearchInput');
+        const resDiv = document.getElementById('qaAddSearchResult');
+        const keyword = input.value.trim().toLowerCase();
+        document.getElementById('qaAddStatus').innerText = '';
+
+        if (keyword.length === 0) {
+            resDiv.innerHTML = '';
+            return;
+        }
+        if (keyword.length < 3) {
+            resDiv.innerHTML = '<div class="header-stats">請輸入至少三個字再搜尋。</div>';
+            return;
+        }
+
+        const matches = db
+            .map((item, idx) => ({ item, idx }))
+            .filter(({ item }) =>
+                (item.ID && item.ID.toLowerCase().includes(keyword)) ||
+                (item.Name && item.Name.toLowerCase().includes(keyword))
+            );
+
+        if (matches.length === 0) {
+            resDiv.innerHTML = '<div class="header-stats">沒有找到符合資料。</div>';
+            return;
+        }
+
+        resDiv.innerHTML = matches.map(({ item, idx }) => `
+            <button type="button" onclick="selectQAAddItem(${idx})">
+                <span class="qa-result-id">${item.ID}</span>
+                <span>${item.Name}</span>
+            </button>
+        `).join('');
+    }
+
+    function selectQAAddItem(dbIdx) {
+        qaAddSelectedIndex = dbIdx;
+        document.getElementById('qaAddSearchInput').value = '';
+        document.getElementById('qaAddSearchResult').innerHTML = '';
+        document.getElementById('qaAddStatus').innerText = '';
+        document.getElementById('qaAddDatePanel').style.display = 'block';
+        initQAAddDate();
+        renderQAAddSelected();
+        renderQAAddDateButtons();
+    }
+
+    function renderQAAddSelected() {
+        const selectedDiv = document.getElementById('qaAddSelected');
+        const item = db[qaAddSelectedIndex];
+        if (!item) {
+            selectedDiv.style.display = 'none';
+            document.getElementById('qaAddDatePanel').style.display = 'none';
+            return;
+        }
+        selectedDiv.style.display = 'block';
+        selectedDiv.innerHTML = `<strong>已選擇</strong><br>${item.ID}<br>${item.Name}`;
+    }
+
+    function renderQAAddDateButtons() {
+        initQAAddDate();
+        const currentYear = new Date().getFullYear();
+        const years = [currentYear, currentYear + 1];
+        if (!years.includes(qaAddDate.year)) qaAddDate.year = currentYear;
+
+        document.getElementById('qaYearButtons').innerHTML = years.map(year => `
+            <button type="button" class="${qaAddDate.year === year ? 'active' : ''}" onclick="selectQAAddDate('year', ${year})">${year}</button>
+        `).join('');
+
+        document.getElementById('qaMonthButtons').innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(month => `
+            <button type="button" class="${qaAddDate.month === month ? 'active' : ''}" onclick="selectQAAddDate('month', ${month})">${month}月</button>
+        `).join('');
+
+        const maxDay = getDaysInMonth(qaAddDate.year, qaAddDate.month);
+        if (qaAddDate.day > maxDay) qaAddDate.day = maxDay;
+        document.getElementById('qaDayButtons').innerHTML = Array.from({ length: maxDay }, (_, i) => i + 1).map(day => `
+            <button type="button" class="${qaAddDate.day === day ? 'active' : ''}" onclick="selectQAAddDate('day', ${day})">${day}</button>
+        `).join('');
+    }
+
+    function selectQAAddDate(type, value) {
+        qaAddDate[type] = value;
+        const maxDay = getDaysInMonth(qaAddDate.year, qaAddDate.month);
+        if (qaAddDate.day > maxDay) qaAddDate.day = maxDay;
+        document.getElementById('qaAddStatus').innerText = '';
+        renderQAAddDateButtons();
+    }
+
+    function createQAExpiry() {
+        const item = db[qaAddSelectedIndex];
+        if (!item) return alert('請先選擇商品');
+        initQAAddDate();
+        const dateStr = `${qaAddDate.year}${pad2(qaAddDate.month)}${pad2(qaAddDate.day)}`;
+        let expArr = item.Expiry ? item.Expiry.split('/').filter(Boolean) : [];
+        if (!expArr.some(d => d === dateStr || d.startsWith(dateStr + '_'))) expArr.push(dateStr);
+        item.Expiry = cleanArrayStr(expArr.join('/'), true);
+        saveData();
+        document.getElementById('qaAddStatus').innerText = `已建檔：${item.ID} ${dateStr}`;
+    }
+
     function renderQA() {
         const showBc = document.getElementById('qaBarcodeToggle').checked;
         const resDiv = document.getElementById('qaResult');
