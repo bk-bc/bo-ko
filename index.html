@@ -329,11 +329,11 @@
             box-sizing: border-box;
         }
 
-        /* 平板以上：四欄 */
+        /* 平板以上：五欄 */
         @media screen and (min-width: 900px) {
             .search-column {
-                flex: 0 0 25%;
-                max-width: 25%;
+                flex: 0 0 20%;
+                max-width: 20%;
             }
         }
 
@@ -368,8 +368,8 @@
                 /* 不給固定高度，讓卡片自然堆疊 */
             }
             .search-column {
-                flex: 0 0 25% !important;
-                max-width: 25% !important;
+                flex: 0 0 20% !important;
+                max-width: 20% !important;
                 padding: 0 2px !important;
                 gap: 0 !important;
                 display: flex !important;
@@ -418,7 +418,7 @@
             .search-column .barcode {
                 width: 100% !important;
                 height: 100% !important;
-                max-height: 26px !important;
+                max-height: 31px !important;
                 display: block !important;
             }
 
@@ -470,9 +470,9 @@
                 page-break-inside: avoid !important;
             }
             .qa-group-title {
-                font-size: 10px !important;
-                padding-bottom: 2px !important;
-                margin-bottom: 3px !important;
+                font-size: 15px !important;
+                padding-bottom: 3px !important;
+                margin-bottom: 5px !important;
             }
             .qa-item-card {
                 border: 0.5pt dashed #666 !important;
@@ -605,6 +605,10 @@
                     <div class="qa-date-group-title">日期</div>
                     <div id="qaDayButtons" class="qa-date-buttons"></div>
                 </div>
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">數量</div>
+                    <div id="qaQtyButtons" class="qa-date-buttons"></div>
+                </div>
                 <button class="btn-primary" onclick="createQAExpiry()" style="width:100%;">建檔</button>
                 <div id="qaAddStatus" class="qa-add-status"></div>
             </div>
@@ -642,6 +646,7 @@
     let stats = { imported: 0, merged: 0 };
     let qaAddSelectedIndex = null;
     let qaAddDate = { year: null, month: null, day: null };
+    let qaAddQty = 1;
 
     // --- 初始化 ---
     window.onload = () => {
@@ -690,8 +695,8 @@
         if (!str) return '';
         let arr = str.split('/').map(s => s.trim()).filter(Boolean);
         if (isDate) {
-            // 允許純日期 20260501 或帶數量 20260501_3
-            arr = arr.filter(d => /^20\d{6}(_\d+)?$/.test(d));
+            // 允許純日期 20260501、帶數量 20260501_3 或 10+ 標記 20260501_10+
+            arr = arr.filter(d => /^20\d{6}(_\d+\+?)?$/.test(d));
             arr.sort((a, b) => a.substring(0, 8).localeCompare(b.substring(0, 8)));
         } else {
             const today = new Date();
@@ -1005,15 +1010,15 @@
             });
         }
 
-        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 48 ? '48+' : filtered.length} (顯示上限48筆)`;
-        filtered = filtered.slice(0, 48);
+        document.getElementById('searchCount').innerText = `剩餘筆數: ${filtered.length > 60 ? '60+' : filtered.length} (顯示上限60筆)`;
+        filtered = filtered.slice(0, 60);
 
         const gridContainer = document.createElement('div');
         gridContainer.className = 'search-grid-container';
         resDiv.appendChild(gridContainer);
 
-        // 分成四組，每組12個
-        for (let i = 0; i < 4; i++) {
+        // 分成五組，每組12個
+        for (let i = 0; i < 5; i++) {
             const chunk = filtered.slice(i * 12, (i + 1) * 12);
             if (chunk.length === 0 && i > 0) break;
 
@@ -1218,6 +1223,7 @@
             initQAAddDate();
             renderQAAddSelected();
             renderQAAddDateButtons();
+            renderQAAddQtyButtons();
             renderQAAddSearch();
             document.getElementById('qaAddSearchInput').focus();
         } else {
@@ -1286,6 +1292,7 @@
         initQAAddDate();
         renderQAAddSelected();
         renderQAAddDateButtons();
+        renderQAAddQtyButtons();
     }
 
     function renderQAAddSelected() {
@@ -1321,6 +1328,13 @@
         `).join('');
     }
 
+    function renderQAAddQtyButtons() {
+        const qtyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, '10+'];
+        document.getElementById('qaQtyButtons').innerHTML = qtyOptions.map(qty => `
+            <button type="button" class="${qaAddQty === qty ? 'active' : ''}" onclick="selectQAAddQty('${qty}')">${qty}</button>
+        `).join('');
+    }
+
     function selectQAAddDate(type, value) {
         qaAddDate[type] = value;
         const maxDay = getDaysInMonth(qaAddDate.year, qaAddDate.month);
@@ -1329,16 +1343,29 @@
         renderQAAddDateButtons();
     }
 
+    function selectQAAddQty(value) {
+        qaAddQty = value === '10+' ? '10+' : parseInt(value, 10);
+        document.getElementById('qaAddStatus').innerText = '';
+        renderQAAddQtyButtons();
+    }
+
+    function formatQAAddExpiry(dateStr) {
+        return qaAddQty === '10+' ? `${dateStr}_10+` : `${dateStr}_${qaAddQty}`;
+    }
+
     function createQAExpiry() {
         const item = db[qaAddSelectedIndex];
         if (!item) return alert('請先選擇商品');
         initQAAddDate();
         const dateStr = `${qaAddDate.year}${pad2(qaAddDate.month)}${pad2(qaAddDate.day)}`;
         let expArr = item.Expiry ? item.Expiry.split('/').filter(Boolean) : [];
-        if (!expArr.some(d => d === dateStr || d.startsWith(dateStr + '_'))) expArr.push(dateStr);
+        const existingIdx = expArr.findIndex(d => d === dateStr || d.startsWith(dateStr + '_'));
+        const expiryEntry = formatQAAddExpiry(dateStr);
+        if (existingIdx >= 0) expArr[existingIdx] = expiryEntry;
+        else expArr.push(expiryEntry);
         item.Expiry = cleanArrayStr(expArr.join('/'), true);
         saveData();
-        document.getElementById('qaAddStatus').innerText = `已建檔：${item.ID} ${dateStr}`;
+        document.getElementById('qaAddStatus').innerText = `已建檔：${item.ID} ${expiryEntry}`;
     }
 
     function renderQA() {
@@ -1400,7 +1427,8 @@
                 const expiryEntry = item.Expiry.split('/').find(e => e === date || e.startsWith(date + '_'));
                 const parsed = expiryEntry ? parseExpiry(expiryEntry) : null;
                 const qty = parsed ? parsed.qty : 0;
-                const qtyDisplay = qty > 0 ? `<span class="qa-qty-badge">*${qty}</span>` : '';
+                const qtyText = parsed && parsed.plus ? `${qty}+` : qty;
+                const qtyDisplay = qty > 0 ? `<span class="qa-qty-badge">*${qtyText}</span>` : '';
 
                 const card = document.createElement('div');
                 card.className = 'qa-item-card';
@@ -1409,7 +1437,7 @@
                         <div class="qa-item-left">
                             <div class="qa-item-actions no-print">
                                 <button class="qa-qty-btn" onclick="updateExpiryQty('${item.ID}', '${date}', -1)">－</button>
-                                <span class="qa-qty-num">${qty}</span>
+                                <span class="qa-qty-num">${qtyText}</span>
                                 <button class="qa-qty-btn" onclick="updateExpiryQty('${item.ID}', '${date}', 1)">＋</button>
                                 <button class="btn-warning" style="padding:1px 6px; font-size:11px; margin-left:4px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
                             </div>
@@ -1543,11 +1571,11 @@
     }
 
     // ── Expiry 數量工具 ──
-    // 從 "20260501_3" 解析出日期和數量
+    // 從 "20260501_3" 或 "20260501_10+" 解析出日期和數量
     function parseExpiry(entry) {
-        const m = entry.match(/^(20\d{6})(?:_(\d+))?$/);
+        const m = entry.match(/^(20\d{6})(?:_(\d+)(\+)?)?$/);
         if (!m) return null;
-        return { date: m[1], qty: m[2] ? parseInt(m[2]) : 0 };
+        return { date: m[1], qty: m[2] ? parseInt(m[2]) : 0, plus: m[3] === '+' };
     }
     // 組合回字串：qty=0 → "20260501"，qty>0 → "20260501_3"
     function formatExpiry(date, qty) {
