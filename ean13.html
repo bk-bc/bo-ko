@@ -184,9 +184,9 @@
         }
 
         /**
-         * 啟動條碼閃爍（針對指定列的輸入框與按鈕）
+         * 啟動條碼閃爍（針對指定列的輸入框數據）
          */
-        function startBlink(dataInput, startBtn) {
+        function startBlink(dataInput) {
             const data = dataInput.value.trim();
 
             if (!generateBarcode(data)) {
@@ -204,10 +204,6 @@
                 const currentVisibility = barcodeElement.style.visibility;
                 barcodeElement.style.visibility = currentVisibility === 'hidden' ? 'visible' : 'hidden';
             }, blinkRate);
-
-            // 只鎖住被按下那一列的輸入框與按鈕
-            startBtn.disabled = true;
-            dataInput.disabled = true;
         }
 
         // --- 初始化與事件監聽器 ---
@@ -217,13 +213,11 @@
             const startBtn = row.querySelector('.startBlinkBtn');
 
             // 按下開始按鈕：用該列輸入框的數據生成並閃爍條碼
-            startBtn.addEventListener('click', () => startBlink(dataInput, startBtn));
+            startBtn.addEventListener('click', () => startBlink(dataInput));
 
-            // 允許用戶在未閃爍時，即時更改條碼
+            // 允許用戶隨時即時更改條碼
             dataInput.addEventListener('input', () => {
-                if (startBtn.disabled === false) {
-                    generateBarcode(dataInput.value);
-                }
+                generateBarcode(dataInput.value);
             });
         });
     </script>
