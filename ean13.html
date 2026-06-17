@@ -17,11 +17,6 @@
             color: #333;
         }
 
-        h1 {
-            color: #1a73e8;
-            margin-bottom: 25px;
-        }
-
         /* --- 控制面板樣式 --- */
         #controls {
             margin-bottom: 40px;
@@ -30,14 +25,29 @@
             border-radius: 12px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 15px;
-            justify-content: center;
-            align-items: center;
+            align-items: stretch;
+            width: 100%;
+            max-width: 350px;
         }
 
         label {
             font-weight: bold;
+        }
+
+        .inputRow {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .barcodeInput {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: 0;
         }
 
         input[type="text"] {
@@ -56,29 +66,27 @@
         /* --- 按鈕樣式 --- */
         button {
             cursor: pointer;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 10px;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            font-size: 18px;
             font-weight: bold;
             border: none;
             border-radius: 6px;
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background-color 0.3s, opacity 0.3s;
         }
 
-        #startBlinkBtn {
+        .startBlinkBtn {
             background-color: #00897b; /* 綠色 */
         }
 
-        #startBlinkBtn:hover:not(:disabled) {
+        .startBlinkBtn:hover:not(:disabled) {
             background-color: #00695c;
-        }
-
-        #stopBlinkBtn {
-            background-color: #e53935; /* 紅色 */
-        }
-
-        #stopBlinkBtn:hover:not(:disabled) {
-            background-color: #c62828;
         }
 
         button:disabled {
@@ -90,7 +98,7 @@
         /* --- 條碼顯示區域 --- */
         #barcode-container {
             min-width: 350px; /* 確保最小寬度 */
-            min-height: 180px; /* 確保最小高度 */
+            min-height: 150px; /* 確保最小高度 */
             background-color: white;
             padding: 30px;
             border: 1px solid #ddd;
@@ -113,13 +121,27 @@
 </head>
 <body>
 
-    <h1>✨ EAN-13 條碼閃爍生成器</h1>
-
     <div id="controls">
-        <label for="barcodeData">輸入 12 位 EAN-13 數據：</label>
-        <input type="text" id="barcodeData" value="471000100000" maxlength="12" pattern="\d{12}">
-        <button id="startBlinkBtn">▶️ 開始閃爍</button>
-        <button id="stopBlinkBtn" disabled>⏹️ 停止閃爍</button>
+        <div class="inputRow">
+            <input type="text" class="barcodeInput" maxlength="12" pattern="\d{12}">
+            <button class="startBlinkBtn" title="開始閃爍">▶️</button>
+        </div>
+        <div class="inputRow">
+            <input type="text" class="barcodeInput" maxlength="12" pattern="\d{12}">
+            <button class="startBlinkBtn" title="開始閃爍">▶️</button>
+        </div>
+        <div class="inputRow">
+            <input type="text" class="barcodeInput" maxlength="12" pattern="\d{12}">
+            <button class="startBlinkBtn" title="開始閃爍">▶️</button>
+        </div>
+        <div class="inputRow">
+            <input type="text" class="barcodeInput" maxlength="12" pattern="\d{12}">
+            <button class="startBlinkBtn" title="開始閃爍">▶️</button>
+        </div>
+        <div class="inputRow">
+            <input type="text" class="barcodeInput" maxlength="12" pattern="\d{12}">
+            <button class="startBlinkBtn" title="開始閃爍">▶️</button>
+        </div>
     </div>
 
     <div id="barcode-container">
@@ -127,12 +149,10 @@
     </div>
 
     <script>
-        const dataInput = document.getElementById('barcodeData');
         const barcodeElement = document.getElementById('barcode');
-        const startBtn = document.getElementById('startBlinkBtn');
-        const stopBtn = document.getElementById('stopBlinkBtn');
+        const inputRows = document.querySelectorAll('.inputRow');
         let blinkInterval;
-        const blinkRate = 100; // 閃爍頻率：每 400 毫秒（0.4 秒）切換一次
+        const blinkRate = 100; // 閃爍頻率：每 100 毫秒切換一次
 
         /**
          * 根據輸入數據生成 EAN-13 條碼
@@ -150,7 +170,7 @@
                 JsBarcode("#barcode", data, {
                     format: "EAN13",
                     displayValue: true, 
-                    height: 120, // 條碼高度
+                    height: 100, // 條碼高度
                     textMargin: 5, // 條碼與數字間距
                     fontSize: 18,
                     margin: 10 // SVG 邊距
@@ -164,9 +184,9 @@
         }
 
         /**
-         * 啟動條碼閃爍
+         * 啟動條碼閃爍（針對指定列的輸入框與按鈕）
          */
-        function startBlink() {
+        function startBlink(dataInput, startBtn) {
             const data = dataInput.value.trim();
 
             if (!generateBarcode(data)) {
@@ -185,44 +205,26 @@
                 barcodeElement.style.visibility = currentVisibility === 'hidden' ? 'visible' : 'hidden';
             }, blinkRate);
 
-            // 更新按鈕狀態和輸入框狀態
+            // 只鎖住被按下那一列的輸入框與按鈕
             startBtn.disabled = true;
-            stopBtn.disabled = false;
-            dataInput.disabled = true; // 閃爍時禁止修改數據
-        }
-
-        /**
-         * 停止條碼閃爍，並確保條碼保持可見
-         */
-        function stopBlink() {
-            if (blinkInterval) {
-                clearInterval(blinkInterval);
-            }
-            // 確保停止時條碼是顯示的 (visible)
-            barcodeElement.style.visibility = 'visible'; 
-
-            // 更新按鈕狀態和輸入框狀態
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            dataInput.disabled = false; // 允許修改數據
+            dataInput.disabled = true;
         }
 
         // --- 初始化與事件監聽器 ---
-        
-        // 1. 頁面載入時先根據預設值生成條碼
-        document.addEventListener('DOMContentLoaded', () => {
-            generateBarcode(dataInput.value);
-        });
-        
-        // 2. 監聽按鈕點擊事件
-        startBtn.addEventListener('click', startBlink);
-        stopBtn.addEventListener('click', stopBlink);
 
-        // 3. 允許用戶在未閃爍時，即時更改條碼
-        dataInput.addEventListener('input', () => {
-            if (startBtn.disabled === false) { // 只有在停止狀態下才即時更新
-                generateBarcode(dataInput.value);
-            }
+        inputRows.forEach((row) => {
+            const dataInput = row.querySelector('.barcodeInput');
+            const startBtn = row.querySelector('.startBlinkBtn');
+
+            // 按下開始按鈕：用該列輸入框的數據生成並閃爍條碼
+            startBtn.addEventListener('click', () => startBlink(dataInput, startBtn));
+
+            // 允許用戶在未閃爍時，即時更改條碼
+            dataInput.addEventListener('input', () => {
+                if (startBtn.disabled === false) {
+                    generateBarcode(dataInput.value);
+                }
+            });
         });
     </script>
 
