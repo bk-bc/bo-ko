@@ -582,6 +582,7 @@
     <div id="qa" class="section">
         <div class="nav-buttons no-print" style="margin-bottom: 10px;">
             <button onclick="switchQAMode('add')" id="qaModeAdd">新增</button>
+            <button onclick="switchQAMode('batch')" id="qaModeBatch">批量</button>
             <button onclick="switchQAMode('list')" id="qaModeList" class="active">清單</button>
         </div>
         <div class="flex-row no-print" id="qaListToolbar">
@@ -611,6 +612,32 @@
                 </div>
                 <button class="btn-primary" onclick="createQAExpiry()" style="width:100%;">建檔</button>
                 <div id="qaAddStatus" class="qa-add-status"></div>
+            </div>
+        </div>
+        <div id="qaBatchPanel" class="qa-add-panel no-print">
+            <textarea id="qaBatchInput" rows="6" placeholder="每行輸入一個 ID"></textarea>
+            <button class="btn-primary" onclick="renderQABatchSearch()" style="width:100%;">搜尋</button>
+            <div id="qaBatchSearchResult" class="qa-add-result" style="margin-top:10px;"></div>
+            <div id="qaBatchSelected" class="qa-add-selected"></div>
+            <div id="qaBatchDatePanel" style="display:none;">
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">年份</div>
+                    <div id="qaBatchYearButtons" class="qa-date-buttons"></div>
+                </div>
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">月份</div>
+                    <div id="qaBatchMonthButtons" class="qa-date-buttons"></div>
+                </div>
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">日期</div>
+                    <div id="qaBatchDayButtons" class="qa-date-buttons"></div>
+                </div>
+                <div class="qa-date-group">
+                    <div class="qa-date-group-title">數量：<span id="qaBatchQtyDisplay">0</span></div>
+                    <div id="qaBatchQtyButtons" class="qa-date-buttons"></div>
+                </div>
+                <button class="btn-primary" onclick="createQABatchExpiry()" style="width:100%;">建檔</button>
+                <div id="qaBatchStatus" class="qa-add-status"></div>
             </div>
         </div>
         <div id="qaResultWrapper">
@@ -647,6 +674,9 @@
     let qaAddSelectedIndex = null;
     let qaAddDate = { year: null, month: null, day: null };
     let qaAddQty = 1;
+    let qaBatchSelectedIndex = null;
+    let qaBatchDate = { year: null, month: null, day: null };
+    let qaBatchQty = 0;
 
     // --- 初始化 ---
     window.onload = () => {
@@ -1213,11 +1243,14 @@
     // --- 4. 品保頁面 ---
     function switchQAMode(mode) {
         const isAdd = mode === 'add';
+        const isBatch = mode === 'batch';
         document.getElementById('qaAddPanel').style.display = isAdd ? 'block' : 'none';
-        document.getElementById('qaListToolbar').style.display = isAdd ? 'none' : 'flex';
-        document.getElementById('qaResultWrapper').style.display = isAdd ? 'none' : 'block';
+        document.getElementById('qaBatchPanel').style.display = isBatch ? 'block' : 'none';
+        document.getElementById('qaListToolbar').style.display = (isAdd || isBatch) ? 'none' : 'flex';
+        document.getElementById('qaResultWrapper').style.display = (isAdd || isBatch) ? 'none' : 'block';
         document.getElementById('qaModeAdd').classList.toggle('active', isAdd);
-        document.getElementById('qaModeList').classList.toggle('active', !isAdd);
+        document.getElementById('qaModeBatch').classList.toggle('active', isBatch);
+        document.getElementById('qaModeList').classList.toggle('active', !isAdd && !isBatch);
 
         if (isAdd) {
             initQAAddDate();
@@ -1226,6 +1259,12 @@
             renderQAAddQtyButtons();
             renderQAAddSearch();
             document.getElementById('qaAddSearchInput').focus();
+        } else if (isBatch) {
+            initQABatchDate();
+            renderQABatchSelected();
+            renderQABatchDateButtons();
+            renderQABatchQtyButtons();
+            document.getElementById('qaBatchInput').focus();
         } else {
             renderQA();
         }
@@ -1368,6 +1407,153 @@
         document.getElementById('qaAddStatus').innerText = `已建檔：${item.ID} ${expiryEntry}`;
     }
 
+    function initQABatchDate() {
+        const now = new Date();
+        if (!qaBatchDate.year) qaBatchDate.year = now.getFullYear();
+        if (!qaBatchDate.month) qaBatchDate.month = now.getMonth() + 1;
+        if (!qaBatchDate.day) qaBatchDate.day = now.getDate();
+        const maxDay = getDaysInMonth(qaBatchDate.year, qaBatchDate.month);
+        if (qaBatchDate.day > maxDay) qaBatchDate.day = maxDay;
+    }
+
+    function renderQABatchSearch() {
+        const input = document.getElementById('qaBatchInput');
+        const resDiv = document.getElementById('qaBatchSearchResult');
+        const lines = input.value.split('\n').map(line => line.trim()).filter(Boolean);
+        document.getElementById('qaBatchStatus').innerText = '';
+
+        qaBatchSelectedIndex = null;
+        renderQABatchSelected();
+
+        if (lines.length === 0) {
+            resDiv.innerHTML = '<div class="header-stats">請先輸入 ID。</div>';
+            return;
+        }
+
+        const seenIds = new Set();
+        const seenIndexes = new Set();
+        const matches = [];
+        const missing = [];
+        lines.forEach(id => {
+            const lowerId = id.toLowerCase();
+            const foundItems = db
+                .map((item, idx) => ({ item, idx }))
+                .filter(({ item }) => item.ID && item.ID.toLowerCase() === lowerId);
+            if (foundItems.length > 0) {
+                foundItems.forEach(({ item, idx }) => {
+                    if (!seenIndexes.has(idx)) {
+                        seenIndexes.add(idx);
+                        matches.push({ item, idx });
+                    }
+                });
+                if (!seenIds.has(lowerId)) {
+                    seenIds.add(lowerId);
+                }
+            } else {
+                missing.push(id);
+            }
+        });
+
+        let html = '';
+        if (matches.length > 0) {
+            html += matches.map(({ item, idx }) => `
+                <button type="button" onclick="selectQABatchItem(${idx})">
+                    <span>${item.Name}</span>
+                    <span>Expiry: ${item.Expiry || '無'}</span>
+                </button>
+            `).join('');
+        }
+        if (missing.length > 0) {
+            html += `<div class="header-stats">未找到 ID：${missing.join('、')}</div>`;
+        }
+        resDiv.innerHTML = html || '<div class="header-stats">沒有找到符合資料。</div>';
+    }
+
+    function selectQABatchItem(dbIdx) {
+        qaBatchSelectedIndex = dbIdx;
+        document.getElementById('qaBatchStatus').innerText = '';
+        document.getElementById('qaBatchDatePanel').style.display = 'block';
+        initQABatchDate();
+        renderQABatchSelected();
+        renderQABatchDateButtons();
+        renderQABatchQtyButtons();
+    }
+
+    function renderQABatchSelected() {
+        const selectedDiv = document.getElementById('qaBatchSelected');
+        const item = db[qaBatchSelectedIndex];
+        if (!item) {
+            selectedDiv.style.display = 'none';
+            document.getElementById('qaBatchDatePanel').style.display = 'none';
+            return;
+        }
+        selectedDiv.style.display = 'block';
+        selectedDiv.innerHTML = `<strong>已選擇</strong><br>${item.ID}<br>${item.Name}`;
+    }
+
+    function renderQABatchDateButtons() {
+        initQABatchDate();
+        const currentYear = new Date().getFullYear();
+        const years = [currentYear, currentYear + 1];
+        if (!years.includes(qaBatchDate.year)) qaBatchDate.year = currentYear;
+
+        document.getElementById('qaBatchYearButtons').innerHTML = years.map(year => `
+            <button type="button" class="${qaBatchDate.year === year ? 'active' : ''}" onclick="selectQABatchDate('year', ${year})">${year}</button>
+        `).join('');
+
+        document.getElementById('qaBatchMonthButtons').innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(month => `
+            <button type="button" class="${qaBatchDate.month === month ? 'active' : ''}" onclick="selectQABatchDate('month', ${month})">${month}月</button>
+        `).join('');
+
+        const maxDay = getDaysInMonth(qaBatchDate.year, qaBatchDate.month);
+        if (qaBatchDate.day > maxDay) qaBatchDate.day = maxDay;
+        document.getElementById('qaBatchDayButtons').innerHTML = Array.from({ length: maxDay }, (_, i) => i + 1).map(day => `
+            <button type="button" class="${qaBatchDate.day === day ? 'active' : ''}" onclick="selectQABatchDate('day', ${day})">${day}</button>
+        `).join('');
+    }
+
+    function renderQABatchQtyButtons() {
+        const display = document.getElementById('qaBatchQtyDisplay');
+        if (display) display.innerText = qaBatchQty;
+        const qtyOptions = [-10, -3, -1, 1, 3, 10];
+        document.getElementById('qaBatchQtyButtons').innerHTML = qtyOptions.map(delta => `
+            <button type="button" onclick="updateQABatchQty(${delta})">${delta > 0 ? '+' : ''}${delta}</button>
+        `).join('');
+    }
+
+    function selectQABatchDate(type, value) {
+        qaBatchDate[type] = value;
+        const maxDay = getDaysInMonth(qaBatchDate.year, qaBatchDate.month);
+        if (qaBatchDate.day > maxDay) qaBatchDate.day = maxDay;
+        document.getElementById('qaBatchStatus').innerText = '';
+        renderQABatchDateButtons();
+    }
+
+    function updateQABatchQty(delta) {
+        qaBatchQty = Math.max(0, qaBatchQty + delta);
+        document.getElementById('qaBatchStatus').innerText = '';
+        renderQABatchQtyButtons();
+    }
+
+    function formatQABatchExpiry(dateStr) {
+        return qaBatchQty > 0 ? `${dateStr}_${qaBatchQty}` : dateStr;
+    }
+
+    function createQABatchExpiry() {
+        const item = db[qaBatchSelectedIndex];
+        if (!item) return alert('請先選擇商品');
+        initQABatchDate();
+        const dateStr = `${qaBatchDate.year}${pad2(qaBatchDate.month)}${pad2(qaBatchDate.day)}`;
+        let expArr = item.Expiry ? item.Expiry.split('/').filter(Boolean) : [];
+        const existingIdx = expArr.findIndex(d => d === dateStr || d.startsWith(dateStr + '_'));
+        const expiryEntry = formatQABatchExpiry(dateStr);
+        if (existingIdx >= 0) expArr[existingIdx] = expiryEntry;
+        else expArr.push(expiryEntry);
+        item.Expiry = cleanArrayStr(expArr.join('/'), true);
+        saveData();
+        document.getElementById('qaBatchStatus').innerText = `已建檔：${item.ID} ${expiryEntry}`;
+    }
+
     function renderQA() {
         const showBc = document.getElementById('qaBarcodeToggle').checked;
         const resDiv = document.getElementById('qaResult');
@@ -1440,6 +1626,7 @@
                                 <span class="qa-qty-num">${qtyText}</span>
                                 <button class="qa-qty-btn" onclick="updateExpiryQty('${item.ID}', '${date}', 1)">＋</button>
                                 <button class="btn-warning" style="padding:1px 6px; font-size:11px; margin-left:4px;" onclick="removeQA('${date}', '${item.ID}')">下架</button>
+                                <button class="btn-primary" style="padding:1px 6px; font-size:11px;" onclick="addQAToBatchInput('${item.ID}')">更新</button>
                             </div>
                             <div class="qa-item-title">${item.Name}${qtyDisplay}</div>
                         </div>
@@ -1596,6 +1783,13 @@
         });
         saveData();
         renderQA();
+    }
+
+    function addQAToBatchInput(itemId) {
+        const input = document.getElementById('qaBatchInput');
+        if (!input) return;
+        const current = input.value.trimEnd();
+        input.value = current ? `${current}\n${itemId}` : itemId;
     }
 
     function removeQA(date, itemId = null) {
